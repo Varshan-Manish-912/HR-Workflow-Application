@@ -25,7 +25,8 @@ import TaskNode from "@/components/nodes/TaskNode";
 import ApprovalNode from "@/components/nodes/ApprovalNode";
 import AutomatedNode from "@/components/nodes/AutomatedNode";
 import EndNode from "@/components/nodes/EndNode";
-import { simulateWorkflow } from "@/lib/simulation/simulateWorkflow";
+import {simulateWorkflow, SimulationResult} from "@/lib/simulation/simulateWorkflow";
+import SimulationPanel from "@/components/panels/SimulationPanel";
 import {
     ApprovalNodeType,
     AutomatedNodeType,
@@ -71,6 +72,7 @@ type FlowContentProps = {
     setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
     onEdgesChange: (changes: EdgeChange[]) => void;
     setSelectedNodeId: (id: string | null) => void;
+    simulationResult: SimulationResult | null;
 };
 
 function FlowContent({
@@ -306,34 +308,48 @@ function CanvasWithPanel() {
     };
 
     return (
-        <div className="relative flex h-full bg-canvas">
-            <div className="flex-1 relative">
-                <FlowContent
-                    nodes={nodes}
-                    edges={edges}
-                    setNodes={setNodes}
-                    setEdges={setEdges}
-                    onEdgesChange={onEdgesChange}
-                    setSelectedNodeId={setSelectedNodeId}
-                />
-                <button
-                    onClick={runSimulation}
-                    className="
-    absolute bottom-45 right-6
-    bg-green-600 hover:bg-green-700
-    text-white
-    px-4 py-2
-    rounded-full
-    shadow-lg
-    flex items-center gap-2
-    z-50
-  "
-                >
-                    <Play size={16} />
-                    Execute Workflow
-                </button>
+        <div className="flex h-full bg-canvas">
+
+            {/* LEFT SIDE (Canvas + Simulation Panel) */}
+            <div className="flex-1 flex flex-col">
+
+                {/* Canvas Area */}
+                <div className="flex-1 relative">
+                    <FlowContent
+                        nodes={nodes}
+                        edges={edges}
+                        setNodes={setNodes}
+                        setEdges={setEdges}
+                        onEdgesChange={onEdgesChange}
+                        setSelectedNodeId={setSelectedNodeId}
+                        simulationResult={simulationResult}
+                    />
+
+          {/*          <button*/}
+          {/*              onClick={runSimulation}*/}
+          {/*              className="*/}
+          {/*  absolute*/}
+          {/*  bottom-45 right-6*/}
+          {/*  bg-green-600 hover:bg-green-700*/}
+          {/*  text-white*/}
+          {/*  px-4 py-2*/}
+          {/*  rounded-full*/}
+          {/*  shadow-lg*/}
+          {/*  flex items-center gap-2*/}
+          {/*  z-50*/}
+          {/*"*/}
+          {/*          >*/}
+          {/*              <Play size={16} />*/}
+          {/*              Execute Workflow*/}
+          {/*          </button>*/}
+                </div>
+
+                {/* 🔥 Simulation Panel (BOTTOM CONSOLE) */}
+                <SimulationPanel nodes={nodes} edges={edges} />
+
             </div>
 
+            {/* RIGHT SIDE PANEL */}
             <div className="w-72 bg-panel border-l border-border text-textPrimary p-4">
                 <h2 className="font-bold mb-2">Node Config</h2>
 
@@ -343,14 +359,7 @@ function CanvasWithPanel() {
                     <p className="text-gray-400 text-sm">Select a node</p>
                 )}
             </div>
-            {simulationResult && (
-                <div className="mt-4 p-2 bg-black text-green-400 text-xs rounded max-h-60 overflow-y-auto">
-                    <p className="font-bold mb-2">Execution Log:</p>
-                    {simulationResult.logs.map((log, i) => (
-                        <div key={i}>{log}</div>
-                    ))}
-                </div>
-            )}
+
         </div>
     );
 }

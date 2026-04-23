@@ -138,3 +138,28 @@ export function simulateWorkflow(
     // ⚠️ If loop exits unexpectedly
     throw new Error("Workflow execution terminated unexpectedly");
 }
+
+export type Automation = {
+    id: string;
+    label: string;
+    params: string[];
+};
+
+const AUTOMATIONS: Automation[] = [
+    {
+        id: "send_email",
+        label: "Send Email",
+        params: ["to", "subject"],
+    },
+    {
+        id: "generate_doc",
+        label: "Generate Document",
+        params: ["template", "recipient"],
+    },
+];
+
+export const getAutomations = async (): Promise<Automation[]> => {
+    // simulate API delay
+    await new Promise((res) => setTimeout(res, 300));
+    return AUTOMATIONS;
+};

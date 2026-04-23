@@ -1,7 +1,8 @@
 "use client";
 
+import React from "react";
 import { AutomatedNodeType } from "@/types/nodeTypes";
-import { MOCK_ACTIONS } from "@/data/mockActions";
+import { getAutomations, Automation } from "@/lib/api/workFlowApi";
 
 type Props = {
     node: AutomatedNodeType;
@@ -16,12 +17,32 @@ export default function AutomatedForm({
                                           node,
                                           updateNodeFieldAction,
                                       }: Props) {
-    const selectedAction = MOCK_ACTIONS.find(
-        (a) => a.id === node.data.actionId
-    );
+    const [actions, setActions] = React.useState<Automation[]>([]);
+    const [loading, setLoading] = React.useState(true);
 
     const params = node.data.actionParams || {};
 
+    // 🔹 Fetch automations
+    React.useEffect(() => {
+        const fetchActions = async () => {
+            try {
+                const data = await getAutomations();
+                console.log("AUTOMATIONS:", data);
+                setActions(data);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchActions();
+    }, []);
+
+    // 🔹 Find selected action
+    const selectedAction = actions.find(
+        (a) => a.id === node.data.actionId
+    );
+
+    // 🔹 Update param safely
     const updateParam = (key: string, value: string) => {
         updateNodeFieldAction(node.id, "actionParams", {
             ...params,
@@ -51,8 +72,11 @@ export default function AutomatedForm({
                     updateNodeFieldAction(node.id, "actionId", e.target.value)
                 }
             >
-                <option value="">Select Action</option>
-                {MOCK_ACTIONS.map((action) => (
+                <option value="">
+                    {loading ? "Loading actions..." : "Select Action"}
+                </option>
+
+                {actions.map((action) => (
                     <option key={action.id} value={action.id}>
                         {action.label}
                     </option>
@@ -64,14 +88,14 @@ export default function AutomatedForm({
                 <div className="space-y-2">
                     <p className="text-sm text-gray-500">Parameters</p>
 
-                    {selectedAction.fields.map((field) => (
+                    {selectedAction.params.map((param) => (
                         <input
-                            key={field.name}
+                            key={param}
                             className="w-full border px-2 py-1 rounded"
-                            placeholder={field.label}
-                            value={params[field.name] || ""}
+                            placeholder={param}
+                            value={(params[param] as string) || ""}
                             onChange={(e) =>
-                                updateParam(field.name, e.target.value)
+                                updateParam(param, e.target.value)
                             }
                         />
                     ))}
