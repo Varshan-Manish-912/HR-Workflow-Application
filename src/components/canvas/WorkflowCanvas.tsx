@@ -25,7 +25,7 @@ import TaskNode from "@/components/nodes/TaskNode";
 import ApprovalNode from "@/components/nodes/ApprovalNode";
 import AutomatedNode from "@/components/nodes/AutomatedNode";
 import EndNode from "@/components/nodes/EndNode";
-import {simulateWorkflow, SimulationResult} from "@/lib/simulation/simulateWorkflow";
+import {SimulationResult} from "@/lib/simulation/simulateWorkflow";
 import SimulationPanel from "@/components/panels/SimulationPanel";
 import {
     ApprovalNodeType,
@@ -39,7 +39,12 @@ import TaskForm from "@/components/forms/TaskForm";
 import ApprovalForm from "@/components/forms/ApprovalForm";
 import AutomatedNodeForm from "@/components/forms/AutomatedForm";
 import EndForm from "@/components/forms/EndForm";
-import {Play} from "lucide-react";
+import {
+    ImperativePanelHandle,
+    Panel,
+    PanelGroup,
+    PanelResizeHandle,
+} from "react-resizable-panels";
 
 const initialNodes: RFNode[] = [
     {
@@ -340,67 +345,78 @@ function CanvasWithPanel() {
     //     }
     // };
 
+
+    const rightPanelRef = useRef<ImperativePanelHandle | null>(null);
+    const bottomPanelRef = useRef<ImperativePanelHandle | null>(null);
+
     return (
-        <div className="flex h-full bg-canvas">
+        <PanelGroup direction="horizontal" className="h-full bg-canvas">
 
-            {/* LEFT SIDE (Canvas + Simulation Panel) */}
-            <div className="flex-1 flex flex-col">
+            {/* LEFT SIDE (Canvas + Simulation) */}
+            <Panel defaultSize={75} minSize={50}>
+                <PanelGroup direction="vertical">
 
-                {/* Canvas Area */}
-                <div className="flex-1 relative">
-                    <FlowContent
-                        nodes={nodes}
-                        edges={edges}
-                        setNodes={setNodes}
-                        setEdges={setEdges}
-                        onEdgesChange={onEdgesChange}
-                        setSelectedNodeId={setSelectedNodeId}
-                        simulationResult={simulationResult}
-                        highlightedNodeIds={simulationResult?.path || []}
-                        activeStep={activeStep}
-                    />
+                    {/* Canvas */}
+                    <Panel defaultSize={80}>
+                        <FlowContent
+                            nodes={nodes}
+                            edges={edges}
+                            setNodes={setNodes}
+                            setEdges={setEdges}
+                            onEdgesChange={onEdgesChange}
+                            setSelectedNodeId={setSelectedNodeId}
+                            simulationResult={simulationResult}
+                            highlightedNodeIds={simulationResult?.path || []}
+                            activeStep={activeStep}
+                        />
+                    </Panel>
 
-          {/*          <button*/}
-          {/*              onClick={runSimulation}*/}
-          {/*              className="*/}
-          {/*  absolute*/}
-          {/*  bottom-45 right-6*/}
-          {/*  bg-green-600 hover:bg-green-700*/}
-          {/*  text-white*/}
-          {/*  px-4 py-2*/}
-          {/*  rounded-full*/}
-          {/*  shadow-lg*/}
-          {/*  flex items-center gap-2*/}
-          {/*  z-50*/}
-          {/*"*/}
-          {/*          >*/}
-          {/*              <Play size={16} />*/}
-          {/*              Execute Workflow*/}
-          {/*          </button>*/}
+                    <PanelResizeHandle className="h-1 bg-gray-700 hover:bg-white cursor-row-resize" />
+
+                    {/* Simulation Panel */}
+                    <Panel ref={bottomPanelRef} defaultSize={20} minSize={10} collapsible>
+                        <div className="relative h-full">
+
+                            <SimulationPanel
+                                nodes={nodes}
+                                edges={edges}
+                                setActiveStep={setActiveStep}
+                                setSimulationResult={setSimulationResult}
+                                bottomPanelRef={bottomPanelRef}
+                                setNodes={setNodes}
+                                setEdges={setEdges}
+                            />
+                        </div>
+                    </Panel>
+
+                </PanelGroup>
+            </Panel>
+
+            <PanelResizeHandle className="w-1 bg-gray-700 hover:bg-white cursor-col-resize" />
+
+            {/* RIGHT CONFIG PANEL */}
+            <Panel ref={rightPanelRef} defaultSize={25} minSize={20} collapsible>
+                <div className="relative h-full bg-panel p-4">
+
+                    {/* Collapse Button */}
+                    <button
+                        onClick={() => rightPanelRef.current?.collapse()}
+                        className="absolute top-2 right-2 bg-gray-700 hover:bg-red-500 px-2 py-1 text-xs rounded"
+                    >
+                        −
+                    </button>
+
+                    <h2 className="font-bold mb-2">Node Config</h2>
+
+                    {selectedNode ? (
+                        renderForm()
+                    ) : (
+                        <p className="text-gray-400 text-sm">Select a node</p>
+                    )}
                 </div>
+            </Panel>
 
-                {/* 🔥 Simulation Panel (BOTTOM CONSOLE) */}
-                <SimulationPanel
-                    nodes={nodes}
-                    edges={edges}
-                    setActiveStep={setActiveStep}
-                    setSimulationResult={setSimulationResult} // ✅ ONLY ADD THIS
-                />
-
-            </div>
-
-            {/* RIGHT SIDE PANEL */}
-            <div className="w-72 bg-panel border-l border-border text-textPrimary p-4">
-                <h2 className="font-bold mb-2">Node Config</h2>
-
-                {selectedNode ? (
-                    renderForm()
-                ) : (
-                    <p className="text-gray-400 text-sm">Select a node</p>
-                )}
-            </div>
-
-        </div>
+        </PanelGroup>
     );
 }
 

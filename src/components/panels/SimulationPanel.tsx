@@ -6,12 +6,16 @@ import { WorkflowNode } from "@/types/nodeTypes";
 import { simulateWorkflowAPI } from "@/lib/api/workFlowApi";
 import { SimulationResult } from "@/lib/simulation/simulateWorkflow";
 import { Play } from "lucide-react";
+import {ImperativePanelHandle} from "react-resizable-panels";
 
 type Props = {
     nodes: WorkflowNode[];
     edges: Edge[];
     setActiveStep: React.Dispatch<React.SetStateAction<number>>;
     setSimulationResult: React.Dispatch<React.SetStateAction<SimulationResult | null>>;
+    bottomPanelRef: React.RefObject<ImperativePanelHandle | null>;
+    setNodes: React.Dispatch<React.SetStateAction<WorkflowNode[]>>;
+    setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
 };
 
 export default function SimulationPanel({
@@ -19,11 +23,16 @@ export default function SimulationPanel({
                                             edges,
                                             setActiveStep,
                                             setSimulationResult,
+                                            bottomPanelRef,
+                                            setNodes,
+                                            setEdges,
                                         }: Props) {
     const [logs, setLogs] = React.useState<string[]>([]);
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
     const [showJSON, setShowJSON] = React.useState(false);
+    const [jsonText, setJsonText] = React.useState("");
+    const [mode, setMode] = React.useState<"export" | "import" | null>(null);
 
     const runSimulation = async () => {
         setError(null);
@@ -96,15 +105,67 @@ export default function SimulationPanel({
         }
     };
 
+    const handleExport = () => {
+        const data = {
+            nodes,
+            edges,
+        };
+
+        setJsonText(JSON.stringify(data, null, 2));
+        setMode("export");
+        setShowJSON(true);
+    };
+
+    const handleImport = () => {
+        try {
+            const parsed = JSON.parse(jsonText);
+
+            if (!parsed.nodes || !parsed.edges) {
+                throw new Error("Invalid structure");
+            }
+
+            // 🔥 IMPORTANT — use setters passed from parent
+            setNodes(parsed.nodes);
+            setEdges(parsed.edges);
+
+            setShowJSON(false);
+        } catch (err) {
+            alert("Invalid JSON");
+        }
+    };
+
     return (
-        <div className="w-full border-t border-gray-800 bg-[#0b0b0b] text-green-400 text-xs">
+        <div className="w-full h-full flex flex-col border-t border-gray-800 bg-[#0b0b0b] text-green-400 text-xs">
             {/* HEADER */}
             <div className="flex items-center justify-between px-3 py-2 border-b border-gray-800">
-        <span className="font-semibold text-gray-300">
-          Simulation Sandbox
-        </span>
+
+  <span className="font-semibold text-gray-300 text-xs">
+    Simulation Sandbox
+  </span>
+                <div className="flex items-center gap-2">
+
+                    <button
+                        onClick={handleExport}
+                        className="text-xs text-blue-400 hover:text-white"
+                    >
+                        Export
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            setMode("import");
+                            setShowJSON(true);
+                            setJsonText("");
+                        }}
+                        className="text-xs text-yellow-400 hover:text-white"
+                    >
+                        Import
+                    </button>
+
+                </div>
 
                 <div className="flex items-center gap-2">
+
                     {/* Toggle JSON */}
                     <button
                         onClick={() => setShowJSON((prev) => !prev)}
@@ -118,23 +179,32 @@ export default function SimulationPanel({
                         onClick={runSimulation}
                         disabled={loading}
                         className="
-              flex items-center gap-1
-              bg-green-600 hover:bg-green-700
-              text-white
-              px-2 py-1
-              rounded
-              text-xs
-              disabled:opacity-50
-            "
+        flex items-center gap-1
+        bg-green-600 hover:bg-green-700
+        text-white
+        px-2 py-1
+        rounded
+        text-xs
+        disabled:opacity-50
+      "
                     >
                         <Play size={12} />
-                        {loading ? "Running..." : "Execute Workflow"}
+                        {loading ? "Running..." : "Execute"}
                     </button>
+
+                    {/* 🔥 Collapse Button */}
+                    <button
+                        onClick={() => bottomPanelRef.current?.collapse()}
+                        className="bg-gray-700 hover:bg-red-500 px-2 py-1 rounded text-xs"
+                    >
+                        −
+                    </button>
+
                 </div>
             </div>
 
             {/* BODY */}
-            <div className="p-3 max-h-48 overflow-y-auto space-y-2 font-mono">
+            <div className="p-3 h-full overflow-y-auto space-y-2 font-mono">
 
                 {/* ❌ ERROR */}
                 {error && (
@@ -145,9 +215,54 @@ export default function SimulationPanel({
 
                 {/* 📜 JSON VIEW */}
                 {showJSON && !error && (
-                    <pre className="bg-black p-2 rounded text-gray-300 text-[10px] overflow-auto">
-            {safeStringify({ nodes, edges })}
-          </pre>
+                    <div className="bg-black p-2 rounded flex flex-col gap-2">
+
+    <textarea
+        value={jsonText}
+        onChange={(e) => setJsonText(e.target.value)}
+        readOnly={mode === "export"}
+        className="w-full h-40 bg-black text-green-400 text-xs p-2 outline-none font-mono resize-none"
+    />
+
+                        <div className="flex justify-between items-center">
+
+                            {/* EXPORT MODE */}
+                            {mode === "export" && (
+                                <button
+                                    onClick={() => {
+                                        const blob = new Blob([jsonText], { type: "application/json" });
+                                        const url = URL.createObjectURL(blob);
+                                        const a = document.createElement("a");
+                                        a.href = url;
+                                        a.download = "workflow.json";
+                                        a.click();
+                                        URL.revokeObjectURL(url);
+                                    }}
+                                    className="text-blue-400 text-xs hover:text-white"
+                                >
+                                    Download JSON
+                                </button>
+                            )}
+
+                            {/* IMPORT MODE */}
+                            {mode === "import" && (
+                                <button
+                                    onClick={handleImport}
+                                    className="text-green-400 text-xs hover:text-white"
+                                >
+                                    Load Workflow
+                                </button>
+                            )}
+
+                            <button
+                                onClick={() => setShowJSON(false)}
+                                className="text-red-400 text-xs hover:text-white"
+                            >
+                                Close
+                            </button>
+
+                        </div>
+                    </div>
                 )}
 
                 {/* 🧠 LOGS */}
