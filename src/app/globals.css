@@ -1,5 +1,13 @@
 @import "tailwindcss";
-
+/* globals.css */
+html,
+body,
+:root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevents double scrollbars with PanelGroup */
+}
 :root {
   --background: #ffffff;
   --foreground: #171717;

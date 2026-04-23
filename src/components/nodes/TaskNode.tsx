@@ -2,46 +2,43 @@
 
 import { NodeProps, Handle, Position } from "reactflow";
 import { TaskNodeData } from "@/types/nodeTypes";
-import { Briefcase, MoreHorizontal, User, Calendar } from "lucide-react";
+import { User, Calendar } from "lucide-react";
 
 export default function TaskNode({ data, selected }: NodeProps<TaskNodeData>) {
     return (
         <div
             className={`
         relative
-        bg-white
-        border border-gray-200
+        bg-white/5 backdrop-blur-md border-2 text-white
         rounded-xl
         shadow-sm
         px-3 py-2
         min-w-[220px]
         transition-all duration-150
         hover:shadow-md
-        ${selected ? "ring-2 ring-blue-500" : ""}
+        ${selected ? "border-2 border-blue-500" : "border-blue-800"}
       `}
         >
-            <Handle id = "top" type="target" position={Position.Top} />
-            <Handle id = "bottom" type="source" position={Position.Bottom} />
-            <Handle id = "left" type="target" position={Position.Left} style={{ left: -6 }}/>
-            <Handle id = "right" type="source" position={Position.Right} style={{ right: -6 }}  />
+            <Handle id = "top" type="target" position={Position.Top} style={{ width: 5, height: 5, backgroundColor: "#3b82f6", borderRadius: "9999px"}}/>
+            <Handle id = "bottom" type="source" position={Position.Bottom} style={{ backgroundColor: "#3b82f6"}} />
+            <Handle id = "left" type="target" position={Position.Left} style={{ backgroundColor: "#3b82f6"}}/>
+            <Handle id = "right" type="source" position={Position.Right} style={{ backgroundColor: "#3b82f6"}}  />
             <div className="flex items-start justify-between mb-2">
                 <div className="flex items-start gap-2">
                     {/* ICON */}
                     <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center">
-                        <Briefcase size={14} className="text-blue-600" />
+                        <User size={14} className="text-blue-600" />
                     </div>
 
                     <div>
-                        <div className="text-sm font-semibold text-gray-800">
+                        <div className="text-sm font-semibold text-blue-400">
                             {data.label || "Task"}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-white">
                             {data.description || "Task description"}
                         </div>
                     </div>
                 </div>
-
-                <MoreHorizontal size={14} className="text-gray-400" />
             </div>
 
             {/* METADATA */}

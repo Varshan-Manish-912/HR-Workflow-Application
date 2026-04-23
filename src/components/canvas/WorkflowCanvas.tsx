@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useRef, useEffect, useState } from "react";
 import StartForm from "@/components/forms/StartForm";
 import {
     Node as RFNode,
@@ -25,7 +25,7 @@ import TaskNode from "@/components/nodes/TaskNode";
 import ApprovalNode from "@/components/nodes/ApprovalNode";
 import AutomatedNode from "@/components/nodes/AutomatedNode";
 import EndNode from "@/components/nodes/EndNode";
-import {SimulationResult} from "@/lib/simulation/simulateWorkflow";
+import { SimulationResult } from "@/lib/simulation/simulateWorkflow";
 import SimulationPanel from "@/components/panels/SimulationPanel";
 import {
     ApprovalNodeType,
@@ -45,7 +45,7 @@ import {
     PanelGroup,
     PanelResizeHandle,
 } from "react-resizable-panels";
-
+import { Undo2, Redo2 } from "lucide-react";
 const initialNodes: RFNode[] = [
     {
         id: "start-1",
@@ -80,6 +80,11 @@ type FlowContentProps = {
     simulationResult: SimulationResult | null;
     highlightedNodeIds: string[];
     activeStep: number;
+    takeSnapshot: () => void;
+    undo: () => void;
+    redo: () => void;
+    canUndo: boolean;
+    canRedo: boolean;
 };
 
 function FlowContent({
@@ -90,12 +95,15 @@ function FlowContent({
                          onEdgesChange,
                          setSelectedNodeId,
                          highlightedNodeIds,
-                         activeStep
+                         activeStep,
+                         takeSnapshot,
+                         undo,
+                         redo,
+                         canUndo,
+                         canRedo
                      }: FlowContentProps) {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
     const { screenToFlowPosition } = useReactFlow();
-
-
 
     const isValidConnection = (connection: Connection) => {
         const { source, target } = connection;
@@ -146,9 +154,10 @@ function FlowContent({
                 },
             };
 
+            takeSnapshot(); // Snapshot right before connecting
             setEdges((eds) => [...eds, newEdge]);
         },
-        [nodes, edges, setEdges]
+        [nodes, edges, setEdges, takeSnapshot]
     );
 
     const onDragOver = (event: React.DragEvent) => {
@@ -179,6 +188,7 @@ function FlowContent({
             },
         };
 
+        takeSnapshot(); // Snapshot right before dropping a new node
         setNodes((nds) => [...nds, newNode]);
     };
 
@@ -192,6 +202,19 @@ function FlowContent({
         },
         [setNodes]
     );
+
+    // Event hooks for capturing position changes and deletions
+    const onNodeDragStart = useCallback(() => {
+        takeSnapshot();
+    }, [takeSnapshot]);
+
+    const onNodesDelete = useCallback(() => {
+        takeSnapshot();
+    }, [takeSnapshot]);
+
+    const onEdgesDelete = useCallback(() => {
+        takeSnapshot();
+    }, [takeSnapshot]);
 
     const highlightedNodes = nodes.map((node) => {
         const isActive =
@@ -223,7 +246,52 @@ function FlowContent({
     });
 
     return (
-        <div ref={reactFlowWrapper} className="w-full h-full">
+        <div ref={reactFlowWrapper} className="w-full h-full relative">
+            {/* Undo / Redo Overlay */}
+            <div className="absolute top-4 right-4 z-10">
+                <div className="flex items-center gap-1 bg-panel border border-gray-700 rounded-xl p-1 shadow-md">
+
+                    {/* Undo */}
+                    <button
+                        onClick={undo}
+                        disabled={!canUndo}
+                        title="Undo (Ctrl + Z)"
+                        className="
+        flex items-center justify-center
+        w-8 h-8
+        rounded-lg
+        text-gray-300
+        hover:bg-gray-700 hover:text-white
+        disabled:opacity-40 disabled:cursor-not-allowed
+        transition-all duration-150
+        active:scale-90
+      "
+                    >
+                        <Undo2 size={16} />
+                    </button>
+
+                    {/* Redo */}
+                    <button
+                        onClick={redo}
+                        disabled={!canRedo}
+                        title="Redo (Ctrl + Y)"
+                        className="
+        flex items-center justify-center
+        w-8 h-8
+        rounded-lg
+        text-gray-300
+        hover:bg-gray-700 hover:text-white
+        disabled:opacity-40 disabled:cursor-not-allowed
+        transition-all duration-150
+        active:scale-90
+      "
+                    >
+                        <Redo2 size={16} />
+                    </button>
+
+                </div>
+            </div>
+
             <ReactFlow
                 nodes={highlightedNodes}
                 edges={highlightedEdges}
@@ -234,6 +302,9 @@ function FlowContent({
                 onDrop={onDrop}
                 onDragOver={onDragOver}
                 onNodeClick={onNodeClick}
+                onNodeDragStart={onNodeDragStart}
+                onNodesDelete={onNodesDelete}
+                onEdgesDelete={onEdgesDelete}
                 deleteKeyCode={["Backspace", "Delete"]}
                 connectionMode={ConnectionMode.Strict}
                 defaultEdgeOptions={{
@@ -254,15 +325,90 @@ function FlowContent({
 }
 
 function CanvasWithPanel() {
-    const [nodes, setNodes] = React.useState<RFNode[]>(initialNodes);
-    const [selectedNodeId, setSelectedNodeId] = React.useState<string | null>(null);
+    const [nodes, setNodes] = useState<RFNode[]>(initialNodes);
+    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-    const [simulationResult, setSimulationResult] = React.useState<{
+    const [simulationResult, setSimulationResult] = useState<{
         path: string[];
         logs: string[];
         result?: { message?: string; summary?: boolean };
     } | null>(null);
-    const [activeStep, setActiveStep] = React.useState<number>(-1);
+    const [activeStep, setActiveStep] = useState<number>(-1);
+
+    // --- Undo / Redo State Tracking ---
+    const [past, setPast] = useState<{ nodes: RFNode[]; edges: Edge[] }[]>([]);
+    const [future, setFuture] = useState<{ nodes: RFNode[]; edges: Edge[] }[]>([]);
+
+    const nodesRef = useRef(nodes);
+    const edgesRef = useRef(edges);
+
+    // Keep refs in sync to capture latest state reliably inside callbacks
+    useEffect(() => {
+        nodesRef.current = nodes;
+        edgesRef.current = edges;
+    }, [nodes, edges]);
+
+    const takeSnapshot = useCallback(() => {
+        setPast((p) => [...p, { nodes: nodesRef.current, edges: edgesRef.current }]);
+        setFuture([]); // Clear future on new action
+    }, []);
+
+    const undo = useCallback(() => {
+        setPast((p) => {
+            if (p.length === 0) return p;
+            const previous = p[p.length - 1];
+            const newPast = p.slice(0, p.length - 1);
+
+            setFuture((f) => [{ nodes: nodesRef.current, edges: edgesRef.current }, ...f]);
+
+            setNodes(previous.nodes);
+            setEdges(previous.edges);
+
+            return newPast;
+        });
+    }, [setNodes, setEdges]);
+
+    const redo = useCallback(() => {
+        setFuture((f) => {
+            if (f.length === 0) return f;
+            const next = f[0];
+            const newFuture = f.slice(1);
+
+            setPast((p) => [...p, { nodes: nodesRef.current, edges: edgesRef.current }]);
+
+            setNodes(next.nodes);
+            setEdges(next.edges);
+
+            return newFuture;
+        });
+    }, [setNodes, setEdges]);
+
+    // Keyboard bindings for standard hotkeys
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            const target = event.target as HTMLElement;
+            // Prevent triggering Undo/Redo if user is typing in a form field
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
+                return;
+            }
+
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+                event.preventDefault();
+                if (event.shiftKey) {
+                    if (future.length > 0) redo();
+                } else {
+                    if (past.length > 0) undo();
+                }
+            } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') {
+                event.preventDefault();
+                if (future.length > 0) redo();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [undo, redo, past.length, future.length]);
+
     const selectedNode =
         nodes.find((node) => node.id === selectedNodeId) || null;
 
@@ -273,6 +419,7 @@ function CanvasWithPanel() {
         field: K,
         value: BaseNodeData[K]
     ) => {
+        takeSnapshot(); // Snapshot right before modifying a field
         setNodes((nds) =>
             nds.map((node) =>
                 node.id === nodeId
@@ -290,7 +437,6 @@ function CanvasWithPanel() {
 
     const renderForm = () => {
         if (!selectedNode) return null;
-        console.log("TYPE:", selectedNode?.type);
         switch (selectedNode.type) {
             case "start":
                 return (
@@ -332,30 +478,14 @@ function CanvasWithPanel() {
         }
     };
 
-    // const runSimulation = () => {
-    //     try {
-    //         const result = simulateWorkflow(nodes, edges, 50); // inputValue for approval
-    //         setSimulationResult(result);
-    //     } catch (err: unknown) {
-    //         if (err instanceof Error) {
-    //             alert(err.message);
-    //         } else {
-    //             alert("An unknown error occurred");
-    //         }
-    //     }
-    // };
-
-
     const rightPanelRef = useRef<ImperativePanelHandle | null>(null);
     const bottomPanelRef = useRef<ImperativePanelHandle | null>(null);
 
     return (
         <PanelGroup direction="horizontal" className="h-full bg-canvas">
-
             {/* LEFT SIDE (Canvas + Simulation) */}
             <Panel defaultSize={75} minSize={50}>
                 <PanelGroup direction="vertical">
-
                     {/* Canvas */}
                     <Panel defaultSize={80}>
                         <FlowContent
@@ -368,15 +498,19 @@ function CanvasWithPanel() {
                             simulationResult={simulationResult}
                             highlightedNodeIds={simulationResult?.path || []}
                             activeStep={activeStep}
+                            takeSnapshot={takeSnapshot}
+                            undo={undo}
+                            redo={redo}
+                            canUndo={past.length > 0}
+                            canRedo={future.length > 0}
                         />
                     </Panel>
 
-                    <PanelResizeHandle className="h-1 bg-gray-700 hover:bg-white cursor-row-resize" />
+                    <PanelResizeHandle className="h-1 bg-gray-700 hover:bg-gray-500 cursor-row-resize" />
 
                     {/* Simulation Panel */}
                     <Panel ref={bottomPanelRef} defaultSize={20} minSize={10} collapsible>
                         <div className="relative h-full">
-
                             <SimulationPanel
                                 nodes={nodes}
                                 edges={edges}
@@ -388,16 +522,14 @@ function CanvasWithPanel() {
                             />
                         </div>
                     </Panel>
-
                 </PanelGroup>
             </Panel>
 
-            <PanelResizeHandle className="w-1 bg-gray-700 hover:bg-white cursor-col-resize" />
+            <PanelResizeHandle className="w-1 bg-gray-700 hover:bg-gray-500 cursor-col-resize" />
 
             {/* RIGHT CONFIG PANEL */}
             <Panel ref={rightPanelRef} defaultSize={25} minSize={20} collapsible>
                 <div className="relative h-full bg-panel p-4">
-
                     {/* Collapse Button */}
                     <button
                         onClick={() => rightPanelRef.current?.collapse()}
@@ -415,7 +547,6 @@ function CanvasWithPanel() {
                     )}
                 </div>
             </Panel>
-
         </PanelGroup>
     );
 }
