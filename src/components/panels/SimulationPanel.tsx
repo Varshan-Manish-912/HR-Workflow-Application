@@ -4,14 +4,22 @@ import React from "react";
 import { Edge } from "reactflow";
 import { WorkflowNode } from "@/types/nodeTypes";
 import { simulateWorkflowAPI } from "@/lib/api/workFlowApi";
+import { SimulationResult } from "@/lib/simulation/simulateWorkflow";
 import { Play } from "lucide-react";
 
 type Props = {
     nodes: WorkflowNode[];
     edges: Edge[];
+    setActiveStep: React.Dispatch<React.SetStateAction<number>>;
+    setSimulationResult: React.Dispatch<React.SetStateAction<SimulationResult | null>>;
 };
 
-export default function SimulationPanel({ nodes, edges }: Props) {
+export default function SimulationPanel({
+                                            nodes,
+                                            edges,
+                                            setActiveStep,
+                                            setSimulationResult,
+                                        }: Props) {
     const [logs, setLogs] = React.useState<string[]>([]);
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
@@ -58,13 +66,16 @@ export default function SimulationPanel({ nodes, edges }: Props) {
                 ...workflowJSON,
                 inputValue: 50,
             });
-
-            const playLogsStepByStep = (logs: string[]) => {
+            setSimulationResult(response);
+            const playLogsStepByStep = (logs: string[], path: string[]) => {
                 let i = 0;
                 setLogs([]);
+                setActiveStep(-1);
 
                 const interval = setInterval(() => {
                     setLogs((prev) => [...prev, logs[i]]);
+                    setActiveStep(i);
+
                     i++;
 
                     if (i >= logs.length) {
@@ -73,7 +84,7 @@ export default function SimulationPanel({ nodes, edges }: Props) {
                 }, 400);
             };
 
-            playLogsStepByStep(response.logs);
+            playLogsStepByStep(response.logs, response.path);
         } catch (err: unknown) {
             if (err instanceof Error) {
                 setError(err.message);

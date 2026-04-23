@@ -73,6 +73,8 @@ type FlowContentProps = {
     onEdgesChange: (changes: EdgeChange[]) => void;
     setSelectedNodeId: (id: string | null) => void;
     simulationResult: SimulationResult | null;
+    highlightedNodeIds: string[];
+    activeStep: number;
 };
 
 function FlowContent({
@@ -82,6 +84,8 @@ function FlowContent({
                          setEdges,
                          onEdgesChange,
                          setSelectedNodeId,
+                         highlightedNodeIds,
+                         activeStep
                      }: FlowContentProps) {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
     const { screenToFlowPosition } = useReactFlow();
@@ -184,11 +188,40 @@ function FlowContent({
         [setNodes]
     );
 
+    const highlightedNodes = nodes.map((node) => {
+        const isActive =
+            activeStep >= 0 &&
+            highlightedNodeIds[activeStep] === node.id;
+
+        return {
+            ...node,
+            style: isActive
+                ? {
+                    border: "2px solid #22c55e",
+                    boxShadow: "0 0 10px #22c55e",
+                }
+                : {},
+        };
+    });
+
+    const highlightedEdges = edges.map((edge) => {
+        const isActive =
+            activeStep >= 0 &&
+            highlightedNodeIds.slice(0, activeStep + 1).includes(edge.target);
+
+        return {
+            ...edge,
+            style: isActive
+                ? { stroke: "#22c55e", strokeWidth: 3 }
+                : edge.style,
+        };
+    });
+
     return (
         <div ref={reactFlowWrapper} className="w-full h-full">
             <ReactFlow
-                nodes={nodes}
-                edges={edges}
+                nodes={highlightedNodes}
+                edges={highlightedEdges}
                 nodeTypes={nodeTypes}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
@@ -224,7 +257,7 @@ function CanvasWithPanel() {
         logs: string[];
         result?: { message?: string; summary?: boolean };
     } | null>(null);
-
+    const [activeStep, setActiveStep] = React.useState<number>(-1);
     const selectedNode =
         nodes.find((node) => node.id === selectedNodeId) || null;
 
@@ -294,18 +327,18 @@ function CanvasWithPanel() {
         }
     };
 
-    const runSimulation = () => {
-        try {
-            const result = simulateWorkflow(nodes, edges, 50); // inputValue for approval
-            setSimulationResult(result);
-        } catch (err: unknown) {
-            if (err instanceof Error) {
-                alert(err.message);
-            } else {
-                alert("An unknown error occurred");
-            }
-        }
-    };
+    // const runSimulation = () => {
+    //     try {
+    //         const result = simulateWorkflow(nodes, edges, 50); // inputValue for approval
+    //         setSimulationResult(result);
+    //     } catch (err: unknown) {
+    //         if (err instanceof Error) {
+    //             alert(err.message);
+    //         } else {
+    //             alert("An unknown error occurred");
+    //         }
+    //     }
+    // };
 
     return (
         <div className="flex h-full bg-canvas">
@@ -323,6 +356,8 @@ function CanvasWithPanel() {
                         onEdgesChange={onEdgesChange}
                         setSelectedNodeId={setSelectedNodeId}
                         simulationResult={simulationResult}
+                        highlightedNodeIds={simulationResult?.path || []}
+                        activeStep={activeStep}
                     />
 
           {/*          <button*/}
@@ -345,7 +380,12 @@ function CanvasWithPanel() {
                 </div>
 
                 {/* 🔥 Simulation Panel (BOTTOM CONSOLE) */}
-                <SimulationPanel nodes={nodes} edges={edges} />
+                <SimulationPanel
+                    nodes={nodes}
+                    edges={edges}
+                    setActiveStep={setActiveStep}
+                    setSimulationResult={setSimulationResult} // ✅ ONLY ADD THIS
+                />
 
             </div>
 
