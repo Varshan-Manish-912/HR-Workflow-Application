@@ -1,16 +1,17 @@
 "use client";
 
 import React, { useCallback, useRef } from "react";
+import StartForm from "@/components/forms/StartForm";
 import {
     Node as RFNode,
     applyNodeChanges,
-    NodeChange,
+    NodeChange, EdgeChange
 } from "reactflow";
+import { ConnectionMode } from "reactflow";
 import ReactFlow, {
     Background,
     Controls,
     MiniMap,
-    addEdge,
     useEdgesState,
     useReactFlow,
     ReactFlowProvider,
@@ -24,12 +25,26 @@ import TaskNode from "@/components/nodes/TaskNode";
 import ApprovalNode from "@/components/nodes/ApprovalNode";
 import AutomatedNode from "@/components/nodes/AutomatedNode";
 import EndNode from "@/components/nodes/EndNode";
+import { simulateWorkflow } from "@/lib/simulation/simulateWorkflow";
+import {
+    ApprovalNodeType,
+    AutomatedNodeType,
+    BaseNodeData,
+    EndNodeType,
+    StartNodeType,
+    TaskNodeType
+} from "@/types/nodeTypes";
+import TaskForm from "@/components/forms/TaskForm";
+import ApprovalForm from "@/components/forms/ApprovalForm";
+import AutomatedNodeForm from "@/components/forms/AutomatedForm";
+import EndForm from "@/components/forms/EndForm";
+import {Play} from "lucide-react";
 
 const initialNodes: RFNode[] = [
     {
         id: "start-1",
         type: "start",
-        position: { x: 250, y: 100 },
+        position: { x: 0, y: 0 },
         data: {
             label: "Start Node",
             description: "",
@@ -51,25 +66,78 @@ const nodeTypes = {
 
 type FlowContentProps = {
     nodes: RFNode[];
+    edges: Edge[];
     setNodes: React.Dispatch<React.SetStateAction<RFNode[]>>;
+    setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
+    onEdgesChange: (changes: EdgeChange[]) => void;
     setSelectedNodeId: (id: string | null) => void;
 };
 
 function FlowContent({
                          nodes,
+                         edges,
                          setNodes,
+                         setEdges,
+                         onEdgesChange,
                          setSelectedNodeId,
                      }: FlowContentProps) {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
     const { screenToFlowPosition } = useReactFlow();
 
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+
+    const isValidConnection = (connection: Connection) => {
+        const { source, target } = connection;
+        if (source === target) return false;
+        const targetNode = nodes.find((n) => n.id === target);
+        return targetNode?.type !== "start";
+    };
 
     const onConnect = useCallback(
         (connection: Connection) => {
-            setEdges((eds) => addEdge(connection, eds));
+            if (!isValidConnection(connection)) return;
+
+            const sourceNode = nodes.find((n) => n.id === connection.source);
+
+            let label = "";
+
+            if (sourceNode?.type === "approval") {
+                const existingOutgoing = edges.filter(
+                    (e) => e.source === connection.source
+                );
+
+                if (existingOutgoing.length === 0) {
+                    label = "approved";
+                } else if (existingOutgoing.length === 1) {
+                    label = "rejected";
+                } else {
+                    alert("Approval node can only have 2 outputs");
+                    return;
+                }
+            }
+
+            if (!connection.source || !connection.target) return;
+
+            const newEdge: Edge = {
+                id: `${connection.source}-${connection.target}-${Date.now()}`,
+                source: connection.source,
+                target: connection.target,
+                sourceHandle: connection.sourceHandle,
+                targetHandle: connection.targetHandle,
+                type: "step",
+                label,
+                labelStyle: {
+                    fill: "#fff",
+                    fontSize: 10,
+                },
+                labelBgStyle: {
+                    fill: "#111",
+                },
+            };
+
+            setEdges((eds) => [...eds, newEdge]);
         },
-        [setEdges]
+        [nodes, edges, setEdges]
     );
 
     const onDragOver = (event: React.DragEvent) => {
@@ -127,6 +195,14 @@ function FlowContent({
                 onDragOver={onDragOver}
                 onNodeClick={onNodeClick}
                 deleteKeyCode={["Backspace", "Delete"]}
+                connectionMode={ConnectionMode.Strict}
+                defaultEdgeOptions={{
+                    type: "step",
+                    style: {
+                        stroke: "#9ca3af",
+                        strokeWidth: 2,
+                    },
+                }}
                 fitView
             >
                 <Background />
@@ -140,86 +216,141 @@ function FlowContent({
 function CanvasWithPanel() {
     const [nodes, setNodes] = React.useState<RFNode[]>(initialNodes);
     const [selectedNodeId, setSelectedNodeId] = React.useState<string | null>(null);
+    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const [simulationResult, setSimulationResult] = React.useState<{
+        path: string[];
+        logs: string[];
+        result?: { message?: string; summary?: boolean };
+    } | null>(null);
 
     const selectedNode =
         nodes.find((node) => node.id === selectedNodeId) || null;
 
-    const updateNodeField = (
+    const updateNodeField = <
+        K extends keyof BaseNodeData
+    >(
         nodeId: string,
-        field: string,
-        value: string
+        field: K,
+        value: BaseNodeData[K]
     ) => {
         setNodes((nds) =>
             nds.map((node) =>
                 node.id === nodeId
                     ? {
                         ...node,
-                        data: { ...node.data, [field]: value },
+                        data: {
+                            ...node.data,
+                            [field]: value,
+                        },
                     }
                     : node
             )
         );
     };
 
+    const renderForm = () => {
+        if (!selectedNode) return null;
+        console.log("TYPE:", selectedNode?.type);
+        switch (selectedNode.type) {
+            case "start":
+                return (
+                    <StartForm
+                        node={selectedNode as StartNodeType}
+                        updateNodeFieldAction={updateNodeField}
+                    />
+                );
+            case "task":
+                return (
+                    <TaskForm
+                        node={selectedNode as TaskNodeType}
+                        updateNodeFieldAction={updateNodeField}
+                    />
+                );
+            case "approval":
+                return (
+                    <ApprovalForm
+                        node={selectedNode as ApprovalNodeType}
+                        updateNodeFieldAction={updateNodeField}
+                    />
+                );
+            case "automated":
+                return (
+                    <AutomatedNodeForm
+                        node={selectedNode as AutomatedNodeType}
+                        updateNodeFieldAction={updateNodeField}
+                    />
+                );
+            case "end":
+                return (
+                    <EndForm
+                        node={selectedNode as EndNodeType}
+                        updateNodeFieldAction={updateNodeField}
+                    />
+                );
+            default:
+                return <p className="text-gray-400 text-sm">No config available</p>;
+        }
+    };
+
+    const runSimulation = () => {
+        try {
+            const result = simulateWorkflow(nodes, edges, 50); // inputValue for approval
+            setSimulationResult(result);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                alert(err.message);
+            } else {
+                alert("An unknown error occurred");
+            }
+        }
+    };
+
     return (
-        <div className="flex h-full">
-            {/* Canvas */}
-            <div className="flex-1">
+        <div className="relative flex h-full bg-canvas">
+            <div className="flex-1 relative">
                 <FlowContent
                     nodes={nodes}
+                    edges={edges}
                     setNodes={setNodes}
+                    setEdges={setEdges}
+                    onEdgesChange={onEdgesChange}
                     setSelectedNodeId={setSelectedNodeId}
                 />
+                <button
+                    onClick={runSimulation}
+                    className="
+    absolute bottom-45 right-6
+    bg-green-600 hover:bg-green-700
+    text-white
+    px-4 py-2
+    rounded-full
+    shadow-lg
+    flex items-center gap-2
+    z-50
+  "
+                >
+                    <Play size={16} />
+                    Execute Workflow
+                </button>
             </div>
 
-            {/* Right Panel */}
-            <div className="w-72 border-l p-4 bg-gray-50">
+            <div className="w-72 bg-panel border-l border-border text-textPrimary p-4">
                 <h2 className="font-bold mb-2">Node Config</h2>
 
                 {selectedNode ? (
-                    <div className="space-y-3">
-                        <p className="font-medium">Edit Task</p>
-
-                        <input
-                            className="w-full border px-2 py-1 rounded"
-                            placeholder="Title"
-                            value={selectedNode.data?.label || ""}
-                            onChange={(e) =>
-                                updateNodeField(selectedNode.id, "label", e.target.value)
-                            }
-                        />
-
-                        <input
-                            className="w-full border px-2 py-1 rounded"
-                            placeholder="Description"
-                            value={selectedNode.data?.description || ""}
-                            onChange={(e) =>
-                                updateNodeField(selectedNode.id, "description", e.target.value)
-                            }
-                        />
-
-                        <input
-                            className="w-full border px-2 py-1 rounded"
-                            placeholder="Assignee"
-                            value={selectedNode.data?.assignee || ""}
-                            onChange={(e) =>
-                                updateNodeField(selectedNode.id, "assignee", e.target.value)
-                            }
-                        />
-
-                        <input
-                            type="date"
-                            className="w-full border px-2 py-1 rounded"
-                            value={selectedNode.data?.dueDate || ""}
-                            onChange={(e) =>
-                                updateNodeField(selectedNode.id, "dueDate", e.target.value)
-                            }
-                        />
-                    </div>
+                    renderForm()
                 ) : (
                     <p className="text-gray-400 text-sm">Select a node</p>
                 )}
             </div>
+            {simulationResult && (
+                <div className="mt-4 p-2 bg-black text-green-400 text-xs rounded max-h-60 overflow-y-auto">
+                    <p className="font-bold mb-2">Execution Log:</p>
+                    {simulationResult.logs.map((log, i) => (
+                        <div key={i}>{log}</div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

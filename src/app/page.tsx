@@ -3,12 +3,9 @@ import Sidebar from "@/components/sidebar/Sidebar";
 
 export default function Home() {
     return (
-        <div className="flex h-screen">
-            <div className="w-64 border-r p-4">
-                <h2 className="font-bold text-lg mb-4">Nodes</h2>
-                <Sidebar />
-            </div>
-            <div className="flex-1">
+        <div className="flex h-screen bg-canvas">
+            <Sidebar />
+            <div className="flex-1 h-full">
                 <WorkflowCanvas />
             </div>
         </div>

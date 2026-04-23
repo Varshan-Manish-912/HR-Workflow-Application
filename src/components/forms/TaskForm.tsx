@@ -1,56 +1,171 @@
 "use client";
 
+import React from "react";
 import { TaskNodeType } from "@/types/nodeTypes";
+import { Calendar, X } from "lucide-react";
 
 type Props = {
     node: TaskNodeType;
-    updateNodeFieldAction: (
+    updateNodeFieldAction: <K extends keyof TaskNodeType["data"]>(
         id: string,
-        field: keyof TaskNodeType["data"],
-        value: string
+        field: K,
+        value: TaskNodeType["data"][K]
     ) => void;
 };
 
 export default function TaskForm({ node, updateNodeFieldAction }: Props) {
+    const customFields = node.data.customFields || {};
+
+    // 🔥 local state to prevent cursor jump
+    const [editingKeys, setEditingKeys] = React.useState<
+        Record<string, string>
+    >({});
+
+    // ➕ Add new field
+    const addField = () => {
+        updateNodeFieldAction(node.id, "customFields", {
+            ...customFields,
+            ["key" + Date.now()]: "",
+        });
+    };
+
+    // ✏️ Update value (safe)
+    const updateValue = (key: string, value: string) => {
+        updateNodeFieldAction(node.id, "customFields", {
+            ...customFields,
+            [key]: value,
+        });
+    };
+
+    // ❌ Delete field
+    const deleteField = (key: string) => {
+        const newFields = { ...customFields };
+        delete newFields[key];
+
+        updateNodeFieldAction(node.id, "customFields", newFields);
+
+        // clean local state
+        setEditingKeys((prev) => {
+            const updated = { ...prev };
+            delete updated[key];
+            return updated;
+        });
+    };
+
     return (
         <div className="space-y-3">
             <p className="font-medium">Task Config</p>
 
+            {/* Title */}
             <input
                 className="w-full border px-2 py-1 rounded"
                 placeholder="Title"
-                value={node.data?.label || ""}
+                value={node.data.label || ""}
                 onChange={(e) =>
                     updateNodeFieldAction(node.id, "label", e.target.value)
                 }
             />
 
+            {/* Description */}
             <input
                 className="w-full border px-2 py-1 rounded"
                 placeholder="Description"
-                value={node.data?.description || ""}
+                value={node.data.description || ""}
                 onChange={(e) =>
                     updateNodeFieldAction(node.id, "description", e.target.value)
                 }
             />
 
+            {/* Assignee */}
             <input
                 className="w-full border px-2 py-1 rounded"
                 placeholder="Assignee"
-                value={node.data?.assignee || ""}
+                value={node.data.assignee || ""}
                 onChange={(e) =>
                     updateNodeFieldAction(node.id, "assignee", e.target.value)
                 }
             />
 
-            <input
-                type="date"
-                className="w-full border px-2 py-1 rounded"
-                value={node.data?.dueDate || ""}
-                onChange={(e) =>
-                    updateNodeFieldAction(node.id, "dueDate", e.target.value)
-                }
-            />
+            {/* Due Date */}
+            <div className="relative">
+                <input
+                    type="date"
+                    className="w-full border px-2 py-1 rounded bg-transparent text-white [color-scheme:light]"
+                    value={node.data.dueDate || ""}
+                    onChange={(e) =>
+                        updateNodeFieldAction(node.id, "dueDate", e.target.value)
+                    }
+                />
+                <Calendar
+                    size={16}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+            </div>
+
+            {/* Custom Fields */}
+            <div className="space-y-2">
+                <p className="text-sm text-gray-500">Custom Fields</p>
+
+                {Object.entries(customFields).map(([key, value]) => {
+                    const tempKey = editingKeys[key] ?? key;
+
+                    return (
+                        <div key={key} className="flex gap-2 items-center">
+                            {/* KEY INPUT */}
+                            <input
+                                className="w-1/2 border px-2 py-1 rounded"
+                                value={tempKey}
+                                onChange={(e) =>
+                                    setEditingKeys((prev) => ({
+                                        ...prev,
+                                        [key]: e.target.value,
+                                    }))
+                                }
+                                onBlur={() => {
+                                    const newKey = editingKeys[key];
+                                    if (!newKey || newKey === key) return;
+
+                                    const newFields = { ...customFields };
+                                    const val = newFields[key];
+                                    delete newFields[key];
+                                    newFields[newKey] = val;
+
+                                    updateNodeFieldAction(node.id, "customFields", newFields);
+
+                                    setEditingKeys((prev) => {
+                                        const updated = { ...prev };
+                                        delete updated[key];
+                                        return updated;
+                                    });
+                                }}
+                            />
+
+                            {/* VALUE INPUT */}
+                            <input
+                                className="w-1/2 border px-2 py-1 rounded"
+                                value={value}
+                                onChange={(e) => updateValue(key, e.target.value)}
+                            />
+
+                            {/* DELETE BUTTON */}
+                            <button
+                                onClick={() => deleteField(key)}
+                                className="text-gray-400 hover:text-red-500"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    );
+                })}
+
+                {/* ADD BUTTON */}
+                <button
+                    onClick={addField}
+                    className="text-xs text-blue-500"
+                >
+                    + Add field
+                </button>
+            </div>
         </div>
     );
 }

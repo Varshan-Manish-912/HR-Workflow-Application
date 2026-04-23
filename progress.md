@@ -1,181 +1,303 @@
-# HR Workflow Designer – Progress Log
-
-## 📌 Project Overview
-
-A visual HR Workflow Designer built using React + React Flow that allows users to:
-
-* Create workflows using drag-and-drop nodes
-* Connect workflow steps visually
-* Select and inspect nodes
-* Prepare for configurable workflows and simulation
+# HR Workflow Designer – Progress Log (Updated v4)
 
 ---
 
-## ✅ Completed Features
+## 📌 Overview
 
-### 1. Project Setup
+A visual workflow builder for HR processes using React Flow, now extended with a **fully functional simulation engine**.
 
-* Next.js (App Router) with TypeScript
-* Tailwind CSS
-* Clean modular folder structure
+The system now supports:
 
----
-
-### 2. Workflow Canvas (React Flow)
-
-* Controlled state using:
-
-    * `useNodesState`
-    * `useEdgesState`
-* Integrated:
-
-    * Background
-    * Controls
-    * MiniMap
-* Wrapped with `ReactFlowProvider`
+* Visual workflow creation
+* Dynamic node configuration
+* Conditional branching
+* Execution simulation with logs
+* Execution path highlighting
 
 ---
 
-### 3. Drag & Drop Node Creation
-
-* Sidebar with node types:
-
-    * Start
-    * Task
-    * Approval
-    * Automated
-    * End
-* Implemented:
-
-    * `onDragStart`
-    * `onDrop`
-    * `onDragOver`
-* Nodes spawn at correct cursor position
+# 🚀 Major Updates Since Last Progress
 
 ---
 
-### 4. Custom Node Types
+## ⚙️ 11. Workflow Simulation Engine (CORE FEATURE)
 
-* Built reusable node components:
+### 🔥 What Was Built:
 
-    * `StartNode`
-    * `TaskNode`
-    * `ApprovalNode`
-    * `AutomatedNode`
-    * `EndNode`
-* Registered via `nodeTypes`
-* Each node visually distinct (color-coded)
+A full **execution engine** that traverses the workflow graph:
 
----
+```text
+Start → Task → Approval → Automated → End
+```
 
-### 5. Node Selection
+### 🧠 Capabilities:
 
-* Implemented `onNodeClick`
-* Centralized `selectedNode` state
-* Visual highlight using `selected` prop
-* Selected node shown in panel
+* Graph traversal using nodes + edges
+* Decision-based routing using edge labels (`approved`, `rejected`)
+* Execution logging (step-by-step)
+* Cycle detection (prevents infinite loops)
+* Error handling (missing edges, invalid graph)
 
----
+### 🧩 Function:
 
-### 6. Node Deletion
+```ts
+simulateWorkflow(nodes, edges, inputValue)
+```
 
-* Enabled keyboard deletion (`Delete` / `Backspace`)
-* Nodes can be removed from canvas
+### 📤 Output:
 
----
+```ts
+{
+  path: string[],
+  logs: string[],
+  result: {
+    message?: string,
+    summary?: boolean
+  }
+}
+```
 
-### 7. Node Connections
+### ✅ Result:
 
-* Added `Handle` components to all nodes
-* Supports:
-
-    * Incoming edges (`target`)
-    * Outgoing edges (`source`)
-* Users can visually connect workflow steps
-
----
-
-### 8. Right-Side Configuration Panel (Basic)
-
-* Panel layout implemented
-* Displays selected node details
-* Structured for future form integration
+* Transforms project from **UI builder → execution system**
+* Demonstrates understanding of **graph algorithms + system design**
 
 ---
 
-## 🧠 Current Architecture
+## 🧠 12. Execution Layer Architecture (Separation of Concerns)
 
-### Data Flow
+### Introduced:
 
-* Sidebar → drag → canvas `onDrop` → node created
-* React Flow manages nodes/edges state
-* Node click → updates `selectedNode`
-* `selectedNode` passed to right-side panel
+```text
+UI Layer (React)
+↓
+Simulation Layer (Pure Function)
+↓
+Graph Data (nodes + edges)
+```
 
----
+### ✅ Result:
 
-### Key Components
-
-* `WorkflowCanvas.tsx`
-
-    * Core orchestration
-    * Handles graph logic, selection, layout
-
-* `FlowContent`
-
-    * React Flow logic
-    * Node/edge state + events
-
-* `CanvasWithPanel`
-
-    * Layout wrapper
-    * Manages selected node
-
-* `Sidebar.tsx`
-
-    * Draggable node source
-
-* `nodes/*`
-
-    * Custom node UIs with handles
+* Fully decoupled execution logic
+* Testable, reusable simulation engine
+* Clean architecture (interview-level)
 
 ---
 
-## ⚠️ Current Limitations
+## 🔄 13. Global Edge State Refactor (CRITICAL FIX)
 
-* No editable node configuration yet
-* Node data is static (label only)
-* No validation (e.g., Start must be first)
-* No workflow serialization
-* No API integration
-* No simulation panel
+### Problem:
 
----
+Edges were scoped inside `FlowContent` → inaccessible to simulation
 
-## 🎯 Next Steps
+### Fix:
 
-### Immediate (HIGH PRIORITY)
+* Lifted `edges` state to `CanvasWithPanel`
+* Passed down via props
 
-* Build dynamic Node Configuration Forms
-* Allow editing node properties
+### ✅ Result:
 
-### Upcoming
-
-* Mock API integration:
-
-    * `/automations`
-    * `/simulate`
-* Workflow serialization (JSON)
-* Simulation panel with execution steps
-* Graph validation (missing links, cycles)
+* Unified graph state
+* Enabled simulation + future features (validation, export)
 
 ---
 
-## 💡 Notes
+## 🎮 14. Simulation Trigger (Floating Action Button)
 
-* Focus on scalability and clean architecture
-* Avoid hardcoding forms per node
-* Maintain type safety
-* Keep UI simple but functional
+### Added:
+
+* Floating CTA: **“Execute Workflow”**
+* Positioned above React Flow MiniMap
+
+### UX Decision:
+
+* Simulation is a **global workflow action**
+* Not tied to individual nodes
+
+### Implementation:
+
+* Button anchored relative to canvas (`position: absolute`)
+* Avoids overlap with MiniMap
+
+### ✅ Result:
+
+* Clean UX
+* Professional interaction pattern
 
 ---
+
+## 📜 15. Execution Logs UI
+
+### Added:
+
+* Real-time execution logs display
+* Shows traversal + decisions + actions
+
+### Example:
+
+```text
+Visiting start node
+Task: Upload Documents
+Approval: approved
+Executing send_email
+Reached End Node
+```
+
+### ✅ Result:
+
+* Debug visibility
+* Demonstrates system behavior clearly
+
+---
+
+## 🎯 16. Execution Path Highlighting
+
+### Added:
+
+* Nodes visited during simulation are visually highlighted
+
+### Implementation:
+
+```ts
+nodes.map(node => ({
+  ...node,
+  style: path.includes(node.id) ? highlighted : default
+}))
+```
+
+### ✅ Result:
+
+* Visual feedback of workflow execution
+* Makes simulation intuitive and demonstrable
+
+---
+
+# 🧠 Current Architecture
+
+```text
+Sidebar → Drag → Canvas
+                 ↓
+            Nodes + Edges (Global State)
+                 ↓
+         Selected Node → Form Panel
+                 ↓
+           updateNodeField()
+                 ↓
+        Node Data Updated
+                 ↓
+      React Flow Re-render
+
+                +
+        Simulation Engine
+                 ↓
+     Graph Traversal + Logic
+                 ↓
+     Logs + Path + Result
+                 ↓
+        UI Visualization
+```
+
+---
+
+# 🎯 Current Capabilities
+
+## ✅ Fully Working Features
+
+* Drag & Drop Workflow Builder
+* Multiple Node Types
+* Dynamic Forms (schema-driven)
+* Conditional Branching (Approval Node)
+* Edge Labeling System
+* Type-safe Node Updates
+* Execution Simulation Engine
+* Execution Logs
+* Execution Path Highlighting
+* Floating Action Trigger
+
+---
+
+# ⚠️ Current Limitations
+
+* No visual validation errors on nodes
+* No step-by-step animation (instant execution only)
+* No persistence (save/load JSON)
+* No backend/API integration for actions
+* No cycle visualization (only error thrown)
+
+---
+
+# 🚀 NEXT PHASE: System Enhancement
+
+---
+
+## 🔥 High Impact Improvements
+
+### 1. Graph Validation Layer
+
+* Detect:
+
+  * Missing connections
+  * Unreachable nodes
+  * Invalid branching
+* Show errors visually on nodes
+
+---
+
+### 2. Step-by-Step Execution Animation
+
+* Animate traversal node-by-node
+* Delay between steps
+* Highlight edges dynamically
+
+---
+
+### 3. Bottom Console Panel (UI Upgrade)
+
+* Dedicated execution log panel
+* Resizable / collapsible
+* Improves UX significantly
+
+---
+
+### 4. Export / Import Workflow
+
+```ts
+JSON.stringify({ nodes, edges })
+```
+
+* Enables persistence
+* Useful for real-world usage
+
+---
+
+### 5. Input-driven Simulation
+
+* Allow user input for:
+
+  * Approval threshold decisions
+* Makes simulation interactive
+
+---
+
+# 🧠 Final Status
+
+You now have:
+
+✅ UI Layer
+✅ Data Layer
+✅ Logic Layer
+✅ Execution Layer
+
+👉 This is now a **complete workflow system prototype**, not just a UI demo.
+
+---
+
+# 💬 Context for Next Instance
+
+Say:
+
+> “We have a React Flow-based workflow builder with full simulation engine implemented. We now want to enhance validation, animation, and persistence.”
+
+---
+
+**This project is now interview-ready and demonstrates system-level thinking.**
