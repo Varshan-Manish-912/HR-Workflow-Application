@@ -80,7 +80,7 @@ export default function ApprovalNode({
 
             {/* Metadata */}
             {data.threshold !== undefined && (
-                <div className="text-xs text-gray-600">
+                <div className="text-xs text-white">
                     Threshold: {data.threshold}
                 </div>
             )}

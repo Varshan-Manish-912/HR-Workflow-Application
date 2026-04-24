@@ -29,7 +29,7 @@ const AUTOMATIONS: Automation[] = [
     {
         id: "send_email",
         label: "Send Email",
-        params: ["to", "subject"],
+        params: ["recipient", "subject"],
     },
     {
         id: "generate_doc",

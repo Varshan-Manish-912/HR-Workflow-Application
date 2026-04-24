@@ -2,6 +2,9 @@
 
 import { ApprovalNodeType } from "@/types/nodeTypes";
 
+const inputClass =
+    "w-full bg-white/5 backdrop-blur-md border border-gray-600/50 text-white text-sm px-2 py-1 rounded-md outline-none placeholder:text-gray-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 transition-all";
+
 type Props = {
     node: ApprovalNodeType;
     updateNodeFieldAction: <K extends keyof ApprovalNodeType["data"]>(
@@ -21,8 +24,8 @@ export default function ApprovalForm({
 
             {/* Title */}
             <input
-                className="w-full border px-2 py-1 rounded"
-                placeholder="Title"
+                className={inputClass}
+                placeholder="Enter Title"
                 value={node.data.label || ""}
                 onChange={(e) =>
                     updateNodeFieldAction(node.id, "label", e.target.value)
@@ -31,8 +34,8 @@ export default function ApprovalForm({
 
             {/* Role */}
             <input
-                className="w-full border px-2 py-1 rounded"
-                placeholder="Approver Role (e.g., Manager)"
+                className={inputClass}
+                placeholder="Enter Role (e.g., Manager)"
                 value={node.data.role || ""}
                 onChange={(e) =>
                     updateNodeFieldAction(node.id, "role", e.target.value)
@@ -42,8 +45,8 @@ export default function ApprovalForm({
             {/* Threshold */}
             <input
                 type="number"
-                className="w-full border px-2 py-1 rounded"
-                placeholder="Auto-approve threshold"
+                className={inputClass}
+                placeholder="Enter Threshold"
                 value={node.data.threshold ?? ""}
                 onChange={(e) =>
                     updateNodeFieldAction(

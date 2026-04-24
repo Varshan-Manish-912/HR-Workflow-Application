@@ -4,6 +4,9 @@ import React from "react";
 import { AutomatedNodeType } from "@/types/nodeTypes";
 import { getAutomations, Automation } from "@/lib/api/workFlowApi";
 
+const inputClass =
+    "w-full bg-white/5 backdrop-blur-md border border-gray-600/50 text-white text-sm px-2 py-1 rounded-md outline-none placeholder:text-gray-400 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500/30 transition-all";
+
 type Props = {
     node: AutomatedNodeType;
     updateNodeFieldAction: <K extends keyof AutomatedNodeType["data"]>(
@@ -19,6 +22,9 @@ export default function AutomatedForm({
                                       }: Props) {
     const [actions, setActions] = React.useState<Automation[]>([]);
     const [loading, setLoading] = React.useState(true);
+    const [open, setOpen] = React.useState(false);
+
+    const dropdownRef = React.useRef<HTMLDivElement>(null);
 
     const params = node.data.actionParams || {};
 
@@ -27,7 +33,6 @@ export default function AutomatedForm({
         const fetchActions = async () => {
             try {
                 const data = await getAutomations();
-                console.log("AUTOMATIONS:", data);
                 setActions(data);
             } finally {
                 setLoading(false);
@@ -37,12 +42,22 @@ export default function AutomatedForm({
         fetchActions();
     }, []);
 
-    // 🔹 Find selected action
+    // 🔹 Close dropdown on outside click
+    React.useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (!dropdownRef.current?.contains(e.target as Node)) {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     const selectedAction = actions.find(
         (a) => a.id === node.data.actionId
     );
 
-    // 🔹 Update param safely
     const updateParam = (key: string, value: string) => {
         updateNodeFieldAction(node.id, "actionParams", {
             ...params,
@@ -56,32 +71,49 @@ export default function AutomatedForm({
 
             {/* Title */}
             <input
-                className="w-full border px-2 py-1 rounded"
-                placeholder="Title"
+                className={inputClass}
+                placeholder="Enter Title"
                 value={node.data.label || ""}
                 onChange={(e) =>
                     updateNodeFieldAction(node.id, "label", e.target.value)
                 }
             />
 
-            {/* Action Selector */}
-            <select
-                className="w-full border px-2 py-1 rounded"
-                value={node.data.actionId || ""}
-                onChange={(e) =>
-                    updateNodeFieldAction(node.id, "actionId", e.target.value)
-                }
-            >
-                <option value="">
-                    {loading ? "Loading actions..." : "Select Action"}
-                </option>
+            {/* 🔥 Custom Select */}
+            <div className="relative" ref={dropdownRef}>
+                <button
+                    type="button"
+                    onClick={() => setOpen((o) => !o)}
+                    className="w-full bg-white/5 backdrop-blur-md border border-gray-600/50 text-white text-sm px-2 py-1 rounded-md text-left flex justify-between items-center"
+                >
+          <span className="text-gray-300">
+            {loading
+                ? "Loading actions..."
+                : selectedAction
+                    ? selectedAction.label
+                    : "Select Action"}
+          </span>
 
-                {actions.map((action) => (
-                    <option key={action.id} value={action.id}>
-                        {action.label}
-                    </option>
-                ))}
-            </select>
+                    <span className="text-gray-400">▾</span>
+                </button>
+
+                {open && (
+                    <div className="absolute z-50 mt-1 w-full bg-gray-900 border border-gray-700 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                        {actions.map((action) => (
+                            <div
+                                key={action.id}
+                                onClick={() => {
+                                    updateNodeFieldAction(node.id, "actionId", action.id);
+                                    setOpen(false);
+                                }}
+                                className="px-3 py-2 text-sm text-white hover:bg-gray-700 cursor-pointer transition"
+                            >
+                                {action.label}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
 
             {/* Dynamic Params */}
             {selectedAction && (
@@ -91,8 +123,8 @@ export default function AutomatedForm({
                     {selectedAction.params.map((param) => (
                         <input
                             key={param}
-                            className="w-full border px-2 py-1 rounded"
-                            placeholder={param}
+                            className={inputClass}
+                            placeholder={`Enter ${param}`}
                             value={(params[param] as string) || ""}
                             onChange={(e) =>
                                 updateParam(param, e.target.value)

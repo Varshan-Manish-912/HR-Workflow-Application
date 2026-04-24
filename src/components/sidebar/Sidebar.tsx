@@ -35,7 +35,7 @@ export default function Sidebar({ sidebarRef }: Props) {
             {/* 🔥 Title */}
             <div className="px-4 pt-4 pb-2 border-b border-border">
                 <h1 className="text-sm font-semibold text-white tracking-wide">
-                    HR-Workflow-Designer
+                    HR Workflow Application
                 </h1>
             </div>
 

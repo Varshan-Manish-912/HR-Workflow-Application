@@ -49,7 +49,7 @@ const initialNodes: RFNode[] = [
         type: "start",
         position: { x: 0, y: 0 },
         data: {
-            label: "Start Node",
+            label: "",
             description: "",
             assignee: "",
             dueDate: "",
@@ -164,6 +164,46 @@ function FlowContent({
         event.dataTransfer.dropEffect = "move";
     };
 
+    // 🔥 PUT THIS ABOVE onDrop (same file)
+    const getDefaultData = (type: string) => {
+        switch (type) {
+            case "start":
+                return {
+                    label: "",
+                    metadata: {},
+                };
+
+            case "task":
+                return {
+                    label: "",
+                    description: "",
+                    assignee: "",
+                    dueDate: "",
+                    customFields: {},
+                };
+
+            case "approval":
+                return {
+                    label: "",
+                    role: "",
+                    threshold: undefined,
+                };
+
+            case "automated":
+                return {
+                    label: "",
+                };
+
+            case "end":
+                return {
+                    label: "",
+                };
+
+            default:
+                return { label: "" };
+        }
+    };
+
     const onDrop = (event: React.DragEvent) => {
         event.preventDefault();
 
@@ -177,17 +217,12 @@ function FlowContent({
 
         const newNode: RFNode = {
             id: `${type}-${Date.now()}`,
-            type: type,
+            type,
             position,
-            data: {
-                label: `${type} node`,
-                description: "",
-                assignee: "",
-                dueDate: "",
-            },
+            data: getDefaultData(type), // 🔥 FIX
         };
 
-        takeSnapshot(); // Snapshot right before dropping a new node
+        takeSnapshot();
         setNodes((nds) => [...nds, newNode]);
     };
 
@@ -464,7 +499,6 @@ function CanvasWithPanel() {
         field: K,
         value: BaseNodeData[K]
     ) => {
-        takeSnapshot(); // Snapshot right before modifying a field
         setNodes((nds) =>
             nds.map((node) =>
                 node.id === nodeId

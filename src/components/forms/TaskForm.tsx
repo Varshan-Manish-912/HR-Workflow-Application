@@ -13,6 +13,10 @@ type Props = {
     ) => void;
 };
 
+const inputClass =
+    "w-full bg-white/5 backdrop-blur-md border border-gray-600/50 text-white text-sm px-2 py-1 rounded-md outline-none placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all";
+
+
 export default function TaskForm({ node, updateNodeFieldAction }: Props) {
     const customFields = node.data.customFields || {};
 
@@ -58,8 +62,8 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
 
             {/* Title */}
             <input
-                className="w-full border px-2 py-1 rounded"
-                placeholder="Title"
+                className={inputClass}
+                placeholder="Enter Title"
                 value={node.data.label || ""}
                 onChange={(e) =>
                     updateNodeFieldAction(node.id, "label", e.target.value)
@@ -68,8 +72,8 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
 
             {/* Description */}
             <input
-                className="w-full border px-2 py-1 rounded"
-                placeholder="Description"
+                className={inputClass}
+                placeholder="Enter Description"
                 value={node.data.description || ""}
                 onChange={(e) =>
                     updateNodeFieldAction(node.id, "description", e.target.value)
@@ -78,8 +82,8 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
 
             {/* Assignee */}
             <input
-                className="w-full border px-2 py-1 rounded"
-                placeholder="Assignee"
+                className={inputClass}
+                placeholder="Enter Assignee"
                 value={node.data.assignee || ""}
                 onChange={(e) =>
                     updateNodeFieldAction(node.id, "assignee", e.target.value)
@@ -90,7 +94,7 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
             <div className="relative">
                 <input
                     type="date"
-                    className="w-full border px-2 py-1 rounded bg-transparent text-white [color-scheme:light]"
+                    className={inputClass}
                     value={node.data.dueDate || ""}
                     onChange={(e) =>
                         updateNodeFieldAction(node.id, "dueDate", e.target.value)
@@ -113,8 +117,9 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
                         <div key={key} className="flex gap-2 items-center">
                             {/* KEY INPUT */}
                             <input
-                                className="w-1/2 border px-2 py-1 rounded"
+                                className={inputClass}
                                 value={tempKey}
+                                placeholder="Enter Key"
                                 onChange={(e) =>
                                     setEditingKeys((prev) => ({
                                         ...prev,
@@ -142,9 +147,10 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
 
                             {/* VALUE INPUT */}
                             <input
-                                className="w-1/2 border px-2 py-1 rounded"
+                                className={inputClass}
                                 value={value}
                                 onChange={(e) => updateValue(key, e.target.value)}
+                                placeholder="Enter Value"
                             />
 
                             {/* DELETE BUTTON */}

@@ -2,10 +2,10 @@
 
 import React from "react";
 import { StartNodeType } from "@/types/nodeTypes";
+import {X} from "lucide-react";
 
 const inputClass =
-    "w-full bg-gray-700 border border-gray-600 text-white text-sm px-2 py-1 rounded outline-none placeholder:text-gray-400 focus:ring-1 focus:ring-blue-500";
-
+    "w-full bg-white/5 backdrop-blur-md border border-gray-600/50 text-white text-sm px-2 py-1 rounded-md outline-none placeholder:text-gray-400 focus:border-green-500 focus:ring-1 focus:ring-green-500/30 transition-all";
 type Props = {
     node: StartNodeType;
     updateNodeFieldAction: <K extends keyof StartNodeType["data"]>(
@@ -25,10 +25,17 @@ export default function StartForm({ node, updateNodeFieldAction }: Props) {
 
 
     const addField = () => {
+        const tempKey = "temp_" + Date.now();
+
         updateNodeFieldAction(node.id, "metadata", {
             ...metadata,
-            ["key" + Date.now()]: "",
+            [tempKey]: "",
         });
+
+        setEditingKeys((prev) => ({
+            ...prev,
+            [tempKey]: "",
+        }));
     };
 
 
@@ -64,7 +71,7 @@ export default function StartForm({ node, updateNodeFieldAction }: Props) {
                 onChange={(e) =>
                     updateNodeFieldAction(node.id, "label", e.target.value)
                 }
-                placeholder="Start Title"
+                placeholder="Enter Node Title"
             />
 
             {/* Metadata */}
@@ -78,7 +85,7 @@ export default function StartForm({ node, updateNodeFieldAction }: Props) {
                         <div key={key} className="flex gap-2 items-center">
                             {/* KEY */}
                             <input
-                                className="w-1/2 border px-2 py-1 rounded"
+                                className={inputClass}
                                 value={tempKey}
                                 onChange={(e) =>
                                     setEditingKeys((prev) => ({
@@ -103,21 +110,23 @@ export default function StartForm({ node, updateNodeFieldAction }: Props) {
                                         return updated;
                                     });
                                 }}
+                                placeholder="Enter Key"
                             />
 
                             {/* VALUE */}
                             <input
-                                className="w-1/2 border px-2 py-1 rounded"
+                                className={inputClass}
                                 value={value}
                                 onChange={(e) => updateValue(key, e.target.value)}
+                                placeholder="Enter Value"
                             />
 
                             {/* DELETE BUTTON */}
                             <button
                                 onClick={() => deleteField(key)}
-                                className="text-red-500 text-xs px-2"
+                                className="text-gray-400 hover:text-red-500"
                             >
-                                ✕
+                                <X size={14} />
                             </button>
                         </div>
                     );

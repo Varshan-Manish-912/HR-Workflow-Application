@@ -50,10 +50,10 @@ export default function StartNode({ data, selected }: NodeProps<StartNodeData>) 
 
                     <div>
                         <div className="text-sm font-semibold text-green-500">
-                            {data.label || "Start"}
+                            {data.label || "Start Node"}
                         </div>
                         <div className="text-xs text-white">
-                            Entry point
+                            Workflow Entry Point
                         </div>
                     </div>
                 </div>

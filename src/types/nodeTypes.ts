@@ -1,13 +1,5 @@
 import { Node as RFNode } from "reactflow";
 
-export type NodeType =
-    | "start"
-    | "task"
-    | "approval"
-    | "automated"
-    | "end";
-
-
 
 export interface BaseNodeData {
     label: string;

@@ -4,7 +4,6 @@ import { NodeProps, Handle, Position } from "reactflow";
 import { TaskNodeData } from "@/types/nodeTypes";
 import { User, Calendar } from "lucide-react";
 
-
 const handleStyleTop = {
     width: 8,
     height: 8,
@@ -37,8 +36,10 @@ const handleStyleRight = {
     transform: "translate(20%, -50%)",
 };
 
-
-export default function TaskNode({ data, selected }: NodeProps<TaskNodeData>) {
+export default function TaskNode({
+                                     data,
+                                     selected,
+                                 }: NodeProps<TaskNodeData>) {
     return (
         <div
             className={`
@@ -50,23 +51,49 @@ export default function TaskNode({ data, selected }: NodeProps<TaskNodeData>) {
         min-w-[220px]
         transition-all duration-150
         hover:shadow-md
-        ${selected ? "border-2 border-blue-500" : "border-blue-800"}
+        ${selected ? "border-blue-500" : "border-blue-800"}
       `}
         >
-            <Handle id = "top" className = "!bg-blue-500 hover:!bg-blue-300" type="target" position={Position.Top} style= {handleStyleTop}/>
-            <Handle id = "bottom" className = "!bg-blue-500 hover:!bg-blue-300" type="source" position={Position.Bottom} style={handleStyleBottom} />
-            <Handle id = "left" className = "!bg-blue-500 hover:!bg-blue-300" type="target" position={Position.Left} style={handleStyleLeft}/>
-            <Handle id = "right" className = "!bg-blue-500 hover:!bg-blue-300" type="source" position={Position.Right} style={handleStyleRight}  />
+            {/* Handles */}
+            <Handle
+                id="top"
+                className="!bg-blue-500 hover:!bg-blue-300"
+                type="target"
+                position={Position.Top}
+                style={handleStyleTop}
+            />
+            <Handle
+                id="bottom"
+                className="!bg-blue-500 hover:!bg-blue-300"
+                type="source"
+                position={Position.Bottom}
+                style={handleStyleBottom}
+            />
+            <Handle
+                id="left"
+                className="!bg-blue-500 hover:!bg-blue-300"
+                type="target"
+                position={Position.Left}
+                style={handleStyleLeft}
+            />
+            <Handle
+                id="right"
+                className="!bg-blue-500 hover:!bg-blue-300"
+                type="source"
+                position={Position.Right}
+                style={handleStyleRight}
+            />
+
+            {/* Header */}
             <div className="flex items-start justify-between mb-2">
                 <div className="flex items-start gap-2">
-                    {/* ICON */}
                     <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center">
                         <User size={14} className="text-blue-600" />
                     </div>
 
                     <div>
                         <div className="text-sm font-semibold text-blue-500">
-                            {data.label || "Task"}
+                            {data.label || "Task Node"}
                         </div>
                         <div className="text-xs text-white">
                             {data.description || "Task description"}
@@ -75,8 +102,8 @@ export default function TaskNode({ data, selected }: NodeProps<TaskNodeData>) {
                 </div>
             </div>
 
-            {/* METADATA */}
-            <div className="flex gap-2 text-[11px]">
+            {/* Metadata */}
+            <div className="flex gap-2 text-[11px] flex-wrap">
                 {data.assignee && (
                     <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100 text-gray-600">
             <User size={12} />
@@ -92,6 +119,20 @@ export default function TaskNode({ data, selected }: NodeProps<TaskNodeData>) {
                 )}
             </div>
 
+            {/* 🔥 Custom Fields (THIS WAS MISSING) */}
+            {data.customFields &&
+                Object.keys(data.customFields).length > 0 && (
+                    <div className="flex flex-wrap gap-1 text-[10px] mt-2">
+                        {Object.entries(data.customFields).map(([key, value]) => (
+                            <span
+                                key={key}
+                                className="px-2 py-0.5 rounded bg-gray-100 text-gray-600"
+                            >
+                {key}: {value}
+              </span>
+                        ))}
+                    </div>
+                )}
         </div>
     );
 }
