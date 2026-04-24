@@ -1,8 +1,8 @@
 import { Edge } from "reactflow";
 import { WorkflowNode } from "@/types/nodeTypes";
-import { simulateWorkflow } from "../simulation/simulateWorkflow";
+// 🔥 1. Import the source of truth
+import { simulateWorkflow, SimulationResult } from "../simulation/simulateWorkflow";
 
-// 🔹 Types
 export type Automation = {
     id: string;
     label: string;
@@ -15,40 +15,22 @@ export type SimulationRequest = {
     inputValue: number;
 };
 
-export type SimulationResponse = {
-    logs: string[];
-    path: string[];
-    result?: {
-        message?: string;
-        summary?: boolean;
-    };
-};
+// 🔥 2. Delete SimulationResponse entirely. We don't need two types for the exact same thing.
 
-// 🔹 Mock DB
 const AUTOMATIONS: Automation[] = [
-    {
-        id: "send_email",
-        label: "Send Email",
-        params: ["recipient", "subject"],
-    },
-    {
-        id: "generate_doc",
-        label: "Generate Document",
-        params: ["template", "recipient"],
-    },
+    { id: "send_email", label: "Send Email", params: ["recipient", "subject"] },
+    { id: "generate_doc", label: "Generate Document", params: ["template", "recipient"] },
 ];
 
-// 🔹 API functions
-
 export const getAutomations = async (): Promise<Automation[]> => {
-    // simulate network delay
     await new Promise((res) => setTimeout(res, 300));
     return AUTOMATIONS;
 };
 
+// 🔥 3. Change the return type to SimulationResult
 export const simulateWorkflowAPI = async (
     payload: SimulationRequest
-): Promise<SimulationResponse> => {
+): Promise<SimulationResult> => {
     await new Promise((res) => setTimeout(res, 500));
 
     const result = simulateWorkflow(

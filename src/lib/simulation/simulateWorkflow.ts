@@ -2,7 +2,8 @@ import { Edge } from "reactflow";
 import { WorkflowNode } from "@/types/nodeTypes";
 
 export type SimulationResult = {
-    path: string[];
+    paths: string[][];
+    edgesTraversed: string[][];
     logs: string[];
     result?: {
         message?: string;
@@ -15,151 +16,102 @@ export function simulateWorkflow(
     edges: Edge[],
     inputValue: number
 ): SimulationResult {
-    // 🔹 1. Find Start Node
     const startNode = nodes.find((n) => n.type === "start");
+    if (!startNode) throw new Error("No start node found");
 
-    if (!startNode) {
-        throw new Error("No start node found");
-    }
+    const allPaths: string[][] = [];
+    const allEdgePaths: string[][] = [];
 
-    // 🔹 2. Setup
-    let currentNode: WorkflowNode | undefined = startNode;
-    const path: string[] = [];
-    const logs: string[] = [];
-    const visited = new Set<string>();
-
-    // 🔹 Helper: get outgoing edges
     const getOutgoingEdges = (nodeId: string) =>
         edges.filter((e) => e.source === nodeId);
 
-    // 🔁 3. Traversal Loop
-    while (currentNode) {
-        // 🛑 Cycle protection
-        if (visited.has(currentNode.id)) {
-            throw new Error("Cycle detected in workflow");
-        }
-        visited.add(currentNode.id);
+    const dfs = (
+        node: WorkflowNode,
+        path: string[],
+        edgePath: string[]
+    ) => {
+        // prevent cycles
+        if (path.includes(node.id)) return;
 
-        path.push(currentNode.id);
-        logs.push(`Visiting ${currentNode.type} node (${currentNode.id})`);
+        const newPath = [...path, node.id];
+        const outgoing = getOutgoingEdges(node.id);
 
-        // 🟢 START NODE
-        if (currentNode.type === "start") {
-            const outgoingEdges = getOutgoingEdges(currentNode.id);
-            const nextEdge: Edge | undefined = outgoingEdges[0];
-
-            if (!nextEdge) {
-                throw new Error("Start node has no outgoing connection");
+        // Helper to finalize and store a completed path
+// Helper to finalize and store a completed path
+        const recordPath = () => {
+            const pathStr = newPath.join("->");
+            // Prevent duplicate ghost paths from being recorded
+            if (!allPaths.some((p) => p.join("->") === pathStr)) {
+                allPaths.push(newPath);
+                allEdgePaths.push(edgePath);
             }
+        };
 
-            currentNode = nodes.find((n) => n.id === nextEdge.target);
-            continue;
+        // ✅ TERMINAL NODE: It's an end node OR has no outgoing edges
+        if (node.type === "end" || outgoing.length === 0) {
+            recordPath();
+            return;
         }
 
-        // 🔵 TASK NODE
-        if (currentNode.type === "task") {
-            logs.push(`Task: ${currentNode.data.label}`);
-
-            const nextEdge = getOutgoingEdges(currentNode.id)[0];
-
-            if (!nextEdge) {
-                throw new Error(`Task node "${currentNode.id}" has no outgoing edge`);
-            }
-
-            currentNode = nodes.find((n) => n.id === nextEdge.target);
-            continue;
-        }
-
-        // 🟣 APPROVAL NODE (Decision Engine)
-        if (currentNode.type === "approval") {
-            const threshold = currentNode.data.threshold ?? 0;
-
+        // 🟣 APPROVAL (single branch)
+        if (node.type === "approval") {
+            const threshold = node.data?.threshold ?? 0;
             const decision = inputValue < threshold ? "approved" : "rejected";
 
-            logs.push(
-                `Approval Node: input (${inputValue}) vs threshold (${threshold}) → ${decision}`
-            );
-
-            const nextEdge = edges.find(
-                (e) =>
-                    e.source === currentNode!.id &&
-                    e.label === decision
-            );
-
-            if (!nextEdge) {
-                throw new Error(
-                    `Approval node "${currentNode.id}" missing "${decision}" edge`
-                );
+            const edge = outgoing.find((e) => e.label === decision);
+            if (edge) {
+                const nextNode = nodes.find((n) => n.id === edge.target);
+                if (nextNode) {
+                    dfs(nextNode, newPath, [...edgePath, edge.id]);
+                } else {
+                    recordPath(); // Dead end: Edge exists but target node is missing
+                }
+            } else {
+                recordPath(); // Dead end: No matching edge for decision
             }
-
-            currentNode = nodes.find((n) => n.id === nextEdge.target);
-            continue;
+            return;
         }
 
-        // 🟡 AUTOMATED NODE
-        if (currentNode.type === "automated") {
-            const actionId = currentNode.data.actionId;
-            const params = currentNode.data.actionParams || {};
-
-            logs.push(
-                `Automated Step: ${actionId} → params ${JSON.stringify(params)}`
-            );
-
-            const nextEdge = getOutgoingEdges(currentNode.id)[0];
-
-            if (!nextEdge) {
-                throw new Error(
-                    `Automated node "${currentNode.id}" has no outgoing edge`
-                );
+        // 🔥 NORMAL DFS (Parallel routes)
+        let progressed = false;
+        for (const edge of outgoing) {
+            const nextNode = nodes.find((n) => n.id === edge.target);
+            if (nextNode) {
+                progressed = true;
+                dfs(nextNode, newPath, [...edgePath, edge.id]);
             }
-
-            currentNode = nodes.find((n) => n.id === nextEdge.target);
-            continue;
         }
 
-        // 🔴 END NODE
-        if (currentNode.type === "end") {
-            logs.push("Reached End Node");
-
-            return {
-                path,
-                logs,
-                result: {
-                    message: currentNode.data.endMessage,
-                    summary: currentNode.data.summary,
-                },
-            };
+        // If we couldn't progress (e.g., broken edges), save the path up to here
+        if (!progressed) {
+            recordPath();
         }
+    };
 
-        // ⚠️ Unknown node type safeguard
-        throw new Error(`Unknown node type: ${currentNode.type}`);
+    // 🚀 START DFS
+    dfs(startNode, [], []);
+
+    if (allPaths.length === 0) {
+        throw new Error("No valid path found");
     }
 
-    // ⚠️ If loop exits unexpectedly
-    throw new Error("Workflow execution terminated unexpectedly");
+    // 📝 REBUILD LOGS ONE BY ONE
+    // Doing this after DFS ensures logs represent distinct, linear paths
+    // from start to finish without interleaving or UI flickering.
+    const logs: string[] = [];
+    allPaths.forEach((path, index) => {
+        logs.push(`--- Path ${index + 1} ---`);
+        path.forEach((nodeId) => {
+            const n = nodes.find((x) => x.id === nodeId);
+            if (n) {
+                logs.push(`Visiting ${n.type} (${n.id})`);
+            }
+        });
+    });
+
+    return {
+        paths: allPaths,
+        edgesTraversed: allEdgePaths,
+        logs,
+    };
 }
-
-export type Automation = {
-    id: string;
-    label: string;
-    params: string[];
-};
-
-const AUTOMATIONS: Automation[] = [
-    {
-        id: "send_email",
-        label: "Send Email",
-        params: ["to", "subject"],
-    },
-    {
-        id: "generate_doc",
-        label: "Generate Document",
-        params: ["template", "recipient"],
-    },
-];
-
-export const getAutomations = async (): Promise<Automation[]> => {
-    // simulate API delay
-    await new Promise((res) => setTimeout(res, 300));
-    return AUTOMATIONS;
-};

@@ -46,6 +46,25 @@ export default function EdgePanel({ edges, selectedEdgeId, setEdges }: Props) {
                         />
                     </div>
 
+                    {/* 🔥 DELETE BUTTON */}
+                    <button
+                        onClick={() => {
+                            setEdges((eds) =>
+                                eds.filter((edge) => edge.id !== selectedEdge.id)
+                            );
+                        }}
+                        className="
+            mt-2
+            flex items-center justify-center gap-2
+            bg-gray-700 hover:bg-red-700
+            text-white text-xs
+            px-3 py-1.5 rounded
+            transition
+        "
+                    >
+                        Delete Edge
+                    </button>
+
                 </div>
             )}
         </div>

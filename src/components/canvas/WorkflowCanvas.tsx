@@ -77,6 +77,7 @@ type FlowContentProps = {
     simulationResult: SimulationResult | null;
     highlightedNodeIds: string[];
     activeStep: number;
+    activePathIndex: number;
     takeSnapshot: () => void;
     undo: () => void;
     redo: () => void;
@@ -94,12 +95,14 @@ function FlowContent({
                          setSelectedNodeId,
                          highlightedNodeIds,
                          activeStep,
+                         activePathIndex,
                          takeSnapshot,
                          undo,
                          redo,
                          canUndo,
                          canRedo,
                          setSelectedEdgeId,
+                         simulationResult
                      }: FlowContentProps) {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
     const { screenToFlowPosition } = useReactFlow();
@@ -251,9 +254,10 @@ function FlowContent({
     }, [takeSnapshot]);
 
     const highlightedNodes = nodes.map((node) => {
+        // ✨ CHANGE: Use slice to leave a trail of highlighted nodes behind the active step
         const isActive =
             activeStep >= 0 &&
-            highlightedNodeIds[activeStep] === node.id;
+            highlightedNodeIds.slice(0, activeStep + 1).includes(node.id);
 
         return {
             ...node,
@@ -266,18 +270,21 @@ function FlowContent({
         };
     });
 
+    const currentEdges =
+        simulationResult?.edgesTraversed?.[activePathIndex] || [];
+
     const highlightedEdges = edges.map((edge) => {
         const isActive =
-            activeStep >= 0 &&
-            highlightedNodeIds.slice(0, activeStep + 1).includes(edge.target);
+            activeStep > 0 &&
+            currentEdges.slice(0, activeStep).includes(edge.id);
 
         return {
             ...edge,
             style: isActive
                 ? { stroke: "#22c55e", strokeWidth: 3 }
-                :  {
+                : {
                     stroke: "#e5e7eb",
-                    strokeWidth: 1.5, // 🔥 enforce here too
+                    strokeWidth: 1.5,
                     opacity: 0.8,
                 },
             animated: isActive,
@@ -408,11 +415,8 @@ function CanvasWithPanel() {
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
-    const [simulationResult, setSimulationResult] = useState<{
-        path: string[];
-        logs: string[];
-        result?: { message?: string; summary?: boolean };
-    } | null>(null);
+    const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
+    const [activePathIndex, setActivePathIndex] = useState(0);
     const [activeStep, setActiveStep] = useState<number>(-1);
 
     // --- Undo / Redo State Tracking ---
@@ -514,6 +518,51 @@ function CanvasWithPanel() {
         );
     };
 
+    useEffect(() => {
+        if (!simulationResult) return;
+
+        let step = -1;
+        let pathIndex = 0;
+
+        const interval = setInterval(() => {
+            const currentPath = simulationResult.paths[pathIndex];
+
+            // Total visual steps = Nodes + Edges
+            const maxSteps = currentPath.length * 2 - 1;
+
+            if (step < maxSteps - 1) {
+                // 1. Walk through the path
+                step++;
+                setActivePathIndex(pathIndex);
+                setActiveStep(step);
+            }
+            else if (step === maxSteps - 1) {
+                // 2. Pause on the final node so the user can see it finished
+                step++;
+            }
+            else if (step === maxSteps) {
+                // 3. Clear the board briefly before starting the next route
+                setActiveStep(-1);
+                step++;
+            }
+            else {
+                // 4. Move to the next route (or finish)
+                pathIndex++;
+
+                if (pathIndex >= simulationResult.paths.length) {
+                    clearInterval(interval);
+                    return;
+                }
+
+                step = 0;
+                setActivePathIndex(pathIndex);
+                setActiveStep(step);
+            }
+        }, 500); // 500ms gives a clean, rapid progression
+
+        return () => clearInterval(interval);
+    }, [simulationResult]);
+
     const renderForm = () => {
         if (!selectedNode) return null;
         switch (selectedNode.type) {
@@ -575,8 +624,11 @@ function CanvasWithPanel() {
                             onEdgesChange={onEdgesChange}
                             setSelectedNodeId={setSelectedNodeId}
                             simulationResult={simulationResult}
-                            highlightedNodeIds={simulationResult?.path || []}
+                            highlightedNodeIds={
+                                simulationResult?.paths?.[activePathIndex] || []
+                            }
                             activeStep={activeStep}
+                            activePathIndex={activePathIndex}
                             takeSnapshot={takeSnapshot}
                             undo={undo}
                             redo={redo}
