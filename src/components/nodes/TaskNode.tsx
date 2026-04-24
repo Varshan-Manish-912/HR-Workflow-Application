@@ -4,6 +4,40 @@ import { NodeProps, Handle, Position } from "reactflow";
 import { TaskNodeData } from "@/types/nodeTypes";
 import { User, Calendar } from "lucide-react";
 
+
+const handleStyleTop = {
+    width: 8,
+    height: 8,
+    borderRadius: "50%",
+    padding: 0,
+    transform: "translate(-50%, -20%)",
+};
+
+const handleStyleBottom = {
+    width: 8,
+    height: 8,
+    borderRadius: "50%",
+    padding: 0,
+    transform: "translate(-50%, 20%)",
+};
+
+const handleStyleLeft = {
+    width: 8,
+    height: 8,
+    borderRadius: "50%",
+    padding: 0,
+    transform: "translate(-20%, -50%)",
+};
+
+const handleStyleRight = {
+    width: 8,
+    height: 8,
+    borderRadius: "50%",
+    padding: 0,
+    transform: "translate(20%, -50%)",
+};
+
+
 export default function TaskNode({ data, selected }: NodeProps<TaskNodeData>) {
     return (
         <div
@@ -19,10 +53,10 @@ export default function TaskNode({ data, selected }: NodeProps<TaskNodeData>) {
         ${selected ? "border-2 border-blue-500" : "border-blue-800"}
       `}
         >
-            <Handle id = "top" type="target" position={Position.Top} style={{ width: 5, height: 5, backgroundColor: "#3b82f6", borderRadius: "9999px"}}/>
-            <Handle id = "bottom" type="source" position={Position.Bottom} style={{ backgroundColor: "#3b82f6"}} />
-            <Handle id = "left" type="target" position={Position.Left} style={{ backgroundColor: "#3b82f6"}}/>
-            <Handle id = "right" type="source" position={Position.Right} style={{ backgroundColor: "#3b82f6"}}  />
+            <Handle id = "top" className = "!bg-blue-500 hover:!bg-blue-300" type="target" position={Position.Top} style= {handleStyleTop}/>
+            <Handle id = "bottom" className = "!bg-blue-500 hover:!bg-blue-300" type="source" position={Position.Bottom} style={handleStyleBottom} />
+            <Handle id = "left" className = "!bg-blue-500 hover:!bg-blue-300" type="target" position={Position.Left} style={handleStyleLeft}/>
+            <Handle id = "right" className = "!bg-blue-500 hover:!bg-blue-300" type="source" position={Position.Right} style={handleStyleRight}  />
             <div className="flex items-start justify-between mb-2">
                 <div className="flex items-start gap-2">
                     {/* ICON */}
@@ -31,7 +65,7 @@ export default function TaskNode({ data, selected }: NodeProps<TaskNodeData>) {
                     </div>
 
                     <div>
-                        <div className="text-sm font-semibold text-blue-400">
+                        <div className="text-sm font-semibold text-blue-500">
                             {data.label || "Task"}
                         </div>
                         <div className="text-xs text-white">

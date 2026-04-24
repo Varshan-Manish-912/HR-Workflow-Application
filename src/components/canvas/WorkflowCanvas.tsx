@@ -1,22 +1,23 @@
 "use client";
 
-import React, { useCallback, useRef, useEffect, useState } from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
+import EdgePanel from "@/components/panels/EdgePanel";
 import StartForm from "@/components/forms/StartForm";
-import {
-    Node as RFNode,
-    applyNodeChanges,
-    NodeChange, EdgeChange
-} from "reactflow";
-import { ConnectionMode } from "reactflow";
 import ReactFlow, {
+    applyNodeChanges,
     Background,
-    Controls,
-    MiniMap,
-    useEdgesState,
-    useReactFlow,
-    ReactFlowProvider,
     Connection,
+    ConnectionMode,
+    Controls,
     Edge,
+    EdgeChange,
+    MarkerType,
+    MiniMap,
+    Node as RFNode,
+    NodeChange,
+    ReactFlowProvider,
+    useEdgesState,
+    useReactFlow
 } from "reactflow";
 import "reactflow/dist/style.css";
 
@@ -25,7 +26,7 @@ import TaskNode from "@/components/nodes/TaskNode";
 import ApprovalNode from "@/components/nodes/ApprovalNode";
 import AutomatedNode from "@/components/nodes/AutomatedNode";
 import EndNode from "@/components/nodes/EndNode";
-import { SimulationResult } from "@/lib/simulation/simulateWorkflow";
+import {SimulationResult} from "@/lib/simulation/simulateWorkflow";
 import SimulationPanel from "@/components/panels/SimulationPanel";
 import {
     ApprovalNodeType,
@@ -39,13 +40,9 @@ import TaskForm from "@/components/forms/TaskForm";
 import ApprovalForm from "@/components/forms/ApprovalForm";
 import AutomatedNodeForm from "@/components/forms/AutomatedForm";
 import EndForm from "@/components/forms/EndForm";
-import {
-    ImperativePanelHandle,
-    Panel,
-    PanelGroup,
-    PanelResizeHandle,
-} from "react-resizable-panels";
-import { Undo2, Redo2 } from "lucide-react";
+import {ImperativePanelHandle, Panel, PanelGroup, PanelResizeHandle,} from "react-resizable-panels";
+import {Redo2, Undo2} from "lucide-react";
+
 const initialNodes: RFNode[] = [
     {
         id: "start-1",
@@ -85,6 +82,7 @@ type FlowContentProps = {
     redo: () => void;
     canUndo: boolean;
     canRedo: boolean;
+    setSelectedEdgeId: (id: string | null) => void;
 };
 
 function FlowContent({
@@ -100,7 +98,8 @@ function FlowContent({
                          undo,
                          redo,
                          canUndo,
-                         canRedo
+                         canRedo,
+                         setSelectedEdgeId,
                      }: FlowContentProps) {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
     const { screenToFlowPosition } = useReactFlow();
@@ -241,7 +240,12 @@ function FlowContent({
             ...edge,
             style: isActive
                 ? { stroke: "#22c55e", strokeWidth: 3 }
-                : edge.style,
+                :  {
+                    stroke: "#e5e7eb",
+                    strokeWidth: 1.5, // 🔥 enforce here too
+                    opacity: 0.8,
+                },
+            animated: isActive,
         };
     });
 
@@ -249,7 +253,7 @@ function FlowContent({
         <div ref={reactFlowWrapper} className="w-full h-full relative">
             {/* Undo / Redo Overlay */}
             <div className="absolute top-4 right-4 z-10">
-                <div className="flex items-center gap-1 bg-panel border border-gray-700 rounded-xl p-1 shadow-md">
+                <div className="flex items-center gap-1 bg-[#111827]/90 backdrop-blur-md border border-[#1f2937] rounded-xl p-1 shadow-lg">
 
                     {/* Undo */}
                     <button
@@ -260,9 +264,10 @@ function FlowContent({
         flex items-center justify-center
         w-8 h-8
         rounded-lg
-        text-gray-300
-        hover:bg-gray-700 hover:text-white
-        disabled:opacity-40 disabled:cursor-not-allowed
+        text-white
+        hover:bg-[#1f2937]
+        active:bg-[#374151]
+        disabled:opacity-30 disabled:cursor-not-allowed
         transition-all duration-150
         active:scale-90
       "
@@ -279,9 +284,10 @@ function FlowContent({
         flex items-center justify-center
         w-8 h-8
         rounded-lg
-        text-gray-300
-        hover:bg-gray-700 hover:text-white
-        disabled:opacity-40 disabled:cursor-not-allowed
+        text-white
+        hover:bg-[#1f2937]
+        active:bg-[#374151]
+        disabled:opacity-30 disabled:cursor-not-allowed
         transition-all duration-150
         active:scale-90
       "
@@ -308,17 +314,55 @@ function FlowContent({
                 deleteKeyCode={["Backspace", "Delete"]}
                 connectionMode={ConnectionMode.Strict}
                 defaultEdgeOptions={{
-                    type: "step",
+                    type: "smoothstep",
                     style: {
                         stroke: "#9ca3af",
-                        strokeWidth: 2,
+                        strokeWidth: 1.5,
                     },
+                    markerEnd: {
+                        type: MarkerType.ArrowClosed,
+                        color:"#e5e7eb",
+                    },
+                }}
+                connectionLineStyle={{
+                    stroke: "#9ca3af",
+                    strokeWidth: 2,
+                    strokeDasharray: "5 5", // 🔥 dotted
+                }}
+                proOptions={{ hideAttribution: true }}
+                onEdgeClick={(_, edge) => setSelectedEdgeId(edge.id)}
+                onPaneClick={() => {
+                    setSelectedNodeId(null);
+                    setSelectedEdgeId(null);
                 }}
                 fitView
             >
                 <Background />
                 <Controls />
-                <MiniMap />
+                <div>
+
+                </div>
+                <MiniMap
+                    style={{ backgroundColor: "#0b0f17"}}
+                    nodeColor={(node) => {
+                        switch (node.type) {
+                            case "start":
+                                return "#22c55e"; // green
+                            case "task":
+                                return "#3b82f6"; // blue
+                            case "approval":
+                                return "#a855f7"; // amber
+                            case "automated":
+                                return "#f59e0b"; // purple
+                            case "end":
+                                return "#ef4444"; // red
+                            default:
+                                return "#6b7280"; // gray fallback
+                        }
+                    }}
+                    nodeStrokeColor="#1f2937"
+                    nodeBorderRadius={2}
+                />
             </ReactFlow>
         </div>
     );
@@ -328,6 +372,7 @@ function CanvasWithPanel() {
     const [nodes, setNodes] = useState<RFNode[]>(initialNodes);
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
     const [simulationResult, setSimulationResult] = useState<{
         path: string[];
         logs: string[];
@@ -503,6 +548,7 @@ function CanvasWithPanel() {
                             redo={redo}
                             canUndo={past.length > 0}
                             canRedo={future.length > 0}
+                            setSelectedEdgeId={setSelectedEdgeId}
                         />
                     </Panel>
 
@@ -529,23 +575,48 @@ function CanvasWithPanel() {
 
             {/* RIGHT CONFIG PANEL */}
             <Panel ref={rightPanelRef} defaultSize={25} minSize={20} collapsible>
-                <div className="relative h-full bg-panel p-4">
-                    {/* Collapse Button */}
-                    <button
-                        onClick={() => rightPanelRef.current?.collapse()}
-                        className="absolute top-2 right-2 bg-gray-700 hover:bg-red-500 px-2 py-1 text-xs rounded"
-                    >
-                        −
-                    </button>
+                <PanelGroup direction="vertical">
 
-                    <h2 className="font-bold mb-2">Node Config</h2>
+                    {/* Node Config */}
+                    <Panel defaultSize={60} minSize={30} className="overflow-hidden">
+                        <div className="relative h-full bg-panel p-4 flex flex-col overflow-hidden">
+                            <button
+                                onClick={() => rightPanelRef.current?.collapse()}
+                                className="absolute top-2 right-2 bg-gray-700 hover:bg-red-600 text-white px-2 py-1 rounded text-xs z-10"
+                            >
+                                −
+                            </button>
 
-                    {selectedNode ? (
-                        renderForm()
-                    ) : (
-                        <p className="text-gray-400 text-sm">Select a node</p>
-                    )}
-                </div>
+                            {/* HEADER */}
+                            <h2 className="font-bold text-sm text-gray-300 mb-3">
+                                Node Configuration
+                            </h2>
+
+                            {/* BODY */}
+                            {selectedNode ? (
+                                <div className="flex-1 overflow-y-auto overflow-x-hidden pl-1 pr-1">
+                                    {renderForm()}
+                                </div>
+                            ) : (
+                                <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
+                                    Select a node
+                                </div>
+                            )}
+                        </div>
+                    </Panel>
+
+                    <PanelResizeHandle className="h-1 bg-gray-700 hover:bg-gray-500 cursor-row-resize" />
+
+                    {/* Edge Config */}
+                    <Panel defaultSize={40} minSize={20}>
+                        <EdgePanel
+                            edges={edges}
+                            selectedEdgeId={selectedEdgeId}
+                            setEdges={setEdges}
+                        />
+                    </Panel>
+
+                </PanelGroup>
             </Panel>
         </PanelGroup>
     );

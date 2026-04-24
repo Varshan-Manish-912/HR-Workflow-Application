@@ -1,6 +1,6 @@
 "use client";
 
-import { Play, CheckCircle, User, Zap, Flag } from "lucide-react";
+import { Play, CheckCircle, User, Zap, Square } from "lucide-react";
 import { ImperativePanelHandle } from "react-resizable-panels";
 
 type Props = {
@@ -12,7 +12,7 @@ const nodeTypes = [
     { type: "task", label: "Task Node", icon: User, color: "text-blue-400" },
     { type: "approval", label: "Approval Node", icon: CheckCircle, color: "text-purple-400" },
     { type: "automated", label: "Automated Node", icon: Zap, color: "text-yellow-400" },
-    { type: "end", label: "End Node", icon: Flag, color: "text-red-400" },
+    { type: "end", label: "End Node", icon: Square, color: "text-red-400" },
 ];
 
 export default function Sidebar({ sidebarRef }: Props) {

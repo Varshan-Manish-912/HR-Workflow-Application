@@ -3,6 +3,9 @@
 import React from "react";
 import { StartNodeType } from "@/types/nodeTypes";
 
+const inputClass =
+    "w-full bg-gray-700 border border-gray-600 text-white text-sm px-2 py-1 rounded outline-none placeholder:text-gray-400 focus:ring-1 focus:ring-blue-500";
+
 type Props = {
     node: StartNodeType;
     updateNodeFieldAction: <K extends keyof StartNodeType["data"]>(
@@ -56,7 +59,7 @@ export default function StartForm({ node, updateNodeFieldAction }: Props) {
 
 
             <input
-                className="w-full border px-2 py-1 rounded"
+                className={inputClass}
                 value={node.data.label || ""}
                 onChange={(e) =>
                     updateNodeFieldAction(node.id, "label", e.target.value)

@@ -89,6 +89,9 @@ export default function SimulationPanel({
 
                     if (i >= logs.length) {
                         clearInterval(interval);
+                        setTimeout(() => {
+                            setActiveStep(-1); // 🔥 STOP animation after finish
+                        }, 1000);
                     }
                 }, 400);
             };
