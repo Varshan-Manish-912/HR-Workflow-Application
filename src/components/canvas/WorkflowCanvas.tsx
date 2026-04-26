@@ -531,6 +531,7 @@ function CanvasWithPanel() {
                     <TaskForm
                         node={selectedNode as TaskNodeType}
                         updateNodeFieldAction={updateNodeField}
+                        deleteNode={deleteNode}
                     />
                 );
             case "approval":
@@ -538,6 +539,7 @@ function CanvasWithPanel() {
                     <ApprovalForm
                         node={selectedNode as ApprovalNodeType}
                         updateNodeFieldAction={updateNodeField}
+                        deleteNode={deleteNode}
                     />
                 );
             case "automated":
@@ -545,6 +547,7 @@ function CanvasWithPanel() {
                     <AutomatedNodeForm
                         node={selectedNode as AutomatedNodeType}
                         updateNodeFieldAction={updateNodeField}
+                        deleteNode={deleteNode}
                     />
                 );
             case "end":
@@ -552,6 +555,7 @@ function CanvasWithPanel() {
                     <EndForm
                         node={selectedNode as EndNodeType}
                         updateNodeFieldAction={updateNodeField}
+                        deleteNode={deleteNode}
                     />
                 );
             default:

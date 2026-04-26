@@ -12,6 +12,7 @@ type Props = {
         field: K,
         value: TaskNodeType["data"][K]
     ) => void;
+    deleteNode: (id: string) => void;
 };
 
 const inputClass =
@@ -20,6 +21,7 @@ const inputClass =
 export default function TaskForm({
                                      node,
                                      updateNodeFieldAction,
+                                     deleteNode,
                                  }: Props) {
     const customFields = node.data.customFields || {};
     const [editingKeys, setEditingKeys] = useState<Record<string, string>>({});
@@ -161,6 +163,14 @@ export default function TaskForm({
                     className="text-xs text-blue-500"
                 >
                     + Add field
+                </button>
+            </div>
+            <div>
+                <button
+                    onClick={() => deleteNode(node.id)}
+                    className="w-full py-1.5 text-xs text-red-400 bg-red-500/10 rounded hover:bg-red-500/20 transition"
+                >
+                    Delete Node
                 </button>
             </div>
         </div>

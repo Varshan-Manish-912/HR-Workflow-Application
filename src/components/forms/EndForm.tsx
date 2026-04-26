@@ -1,6 +1,7 @@
 "use client";
 
 import { EndNodeType } from "@/types/nodeTypes";
+import React from "react";
 
 const inputClass =
     "w-full bg-white/5 backdrop-blur-md border border-gray-600/50 text-white text-sm px-2 py-1 rounded-md outline-none placeholder:text-gray-400 focus:border-red-500 focus:ring-1 focus:ring-red-500/30 transition-all";
@@ -15,11 +16,13 @@ type Props = {
         field: K,
         value: EndNodeType["data"][K]
     ) => void;
+    deleteNode: (id: string) => void;
 };
 
 export default function EndForm({
                                     node,
                                     updateNodeFieldAction,
+                                    deleteNode,
                                 }: Props) {
     return (
         <div className="space-y-3">
@@ -65,6 +68,14 @@ export default function EndForm({
                   node.data.summary ? "translate-x-5" : ""
               }`}
           />
+                </button>
+            </div>
+            <div>
+                <button
+                    onClick={() => deleteNode(node.id)}
+                    className="w-full py-1.5 text-xs text-red-400 bg-red-500/10 rounded hover:bg-red-500/20 transition"
+                >
+                    Delete Node
                 </button>
             </div>
         </div>

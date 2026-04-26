@@ -15,11 +15,13 @@ type Props = {
         field: K,
         value: AutomatedNodeType["data"][K]
     ) => void;
+    deleteNode: (id: string) => void;
 };
 
 export default function AutomatedForm({
                                           node,
                                           updateNodeFieldAction,
+                                          deleteNode,
                                       }: Props) {
     const [actions, setActions] = useState<Automation[]>([]);
     const [loading, setLoading] = useState(true);
@@ -128,6 +130,14 @@ export default function AutomatedForm({
                     ))}
                 </div>
             )}
+            <div>
+                <button
+                    onClick={() => deleteNode(node.id)}
+                    className="w-full py-1.5 text-xs text-red-400 bg-red-500/10 rounded hover:bg-red-500/20 transition"
+                >
+                    Delete Node
+                </button>
+            </div>
         </div>
     );
 }

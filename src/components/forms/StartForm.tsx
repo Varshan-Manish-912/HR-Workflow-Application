@@ -135,7 +135,7 @@ export default function StartForm({
                     + Add metadata
                 </button>
             </div>
-            <div className="pt-3 border-t border-gray-700">
+            <div className="pt-3">
                 <button
                     onClick={() => {
                             deleteNode(node.id);
