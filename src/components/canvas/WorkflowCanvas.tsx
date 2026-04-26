@@ -235,7 +235,7 @@ function FlowContent({
         return {
             ...node,
             style: isActive
-                ? { border: "2px solid #22c55e", boxShadow: "0 0 10px #22c55e" }
+                ? { border: "2px solid #22c55e", boxShadow: "0 0 10px #22c55e", borderRadius: "12px"}
                 : {},
         };
     });
@@ -292,7 +292,7 @@ function FlowContent({
                 onNodeDragStart={onNodeDragStart}
                 onNodesDelete={onNodesDelete}
                 onEdgesDelete={onEdgesDelete}
-                deleteKeyCode={["Backspace", "Delete"]}
+                deleteKeyCode={["Delete"]}
                 connectionMode={ConnectionMode.Strict}
                 defaultEdgeOptions={{
                     type: "smoothstep",
@@ -310,6 +310,8 @@ function FlowContent({
                     setSelectedNodeId(null);
                     setSelectedEdgeId(null);
                 }}
+                snapToGrid={true}
+                snapGrid={[10, 10]}
                 fitView
             >
                 <Background />
@@ -406,6 +408,15 @@ function CanvasWithPanel() {
             return newFuture;
         });
     }, [setNodes, setEdges]);
+
+    const deleteNode = (id: string) => {
+        takeSnapshot();
+
+        setNodes((nds) => nds.filter((n) => n.id !== id));
+        setEdges((eds) =>
+            eds.filter((e) => e.source !== id && e.target !== id)
+        );
+    };
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -512,6 +523,7 @@ function CanvasWithPanel() {
                     <StartForm
                         node={selectedNode as StartNodeType}
                         updateNodeFieldAction={updateNodeField}
+                        deleteNode={deleteNode}
                     />
                 );
             case "task":

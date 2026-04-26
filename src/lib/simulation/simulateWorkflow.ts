@@ -50,27 +50,6 @@ export function simulateWorkflow(
             return;
         }
 
-        if (node.type === "approval") {
-            const threshold = node.data?.threshold ?? 0;
-            const decision =
-                inputValue < threshold ? "approved" : "rejected";
-
-            const edge = outgoing.find((e) => e.label === decision);
-
-            if (edge) {
-                const nextNode = nodes.find((n) => n.id === edge.target);
-                if (nextNode) {
-                    dfs(nextNode, newPath, [...edgePath, edge.id]);
-                } else {
-                    recordPath();
-                }
-            } else {
-                recordPath();
-            }
-
-            return;
-        }
-
         let progressed = false;
 
         for (const edge of outgoing) {

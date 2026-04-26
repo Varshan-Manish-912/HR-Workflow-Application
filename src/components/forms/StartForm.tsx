@@ -15,11 +15,13 @@ type Props = {
         field: K,
         value: StartNodeType["data"][K]
     ) => void;
+    deleteNode: (id: string) => void;
 };
 
 export default function StartForm({
                                       node,
                                       updateNodeFieldAction,
+                                      deleteNode,
                                   }: Props) {
     const metadata = node.data.metadata || {};
     const [editingKeys, setEditingKeys] = useState<Record<string, string>>({});
@@ -131,6 +133,16 @@ export default function StartForm({
                     className="text-xs text-blue-500"
                 >
                     + Add metadata
+                </button>
+            </div>
+            <div className="pt-3 border-t border-gray-700">
+                <button
+                    onClick={() => {
+                            deleteNode(node.id);
+                    }}
+                    className="w-full py-1.5 text-xs text-red-400 bg-red-500/10 rounded hover:bg-red-500/20 transition"
+                >
+                    Delete Node
                 </button>
             </div>
         </div>

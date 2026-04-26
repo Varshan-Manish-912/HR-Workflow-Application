@@ -37,18 +37,20 @@ const getActionSummary = (
 
     switch (actionId) {
         case "generate_doc":
-            return params.title
-                ? `Doc: ${params.title}`
-                : "Enter document title";
+            return `${params.template || "Template?"} → ${
+                params.recipient || "Recipient?"
+            }`;
 
         case "send_email":
-            return params.to
-                ? `To: ${params.to}`
-                : "Enter recipient";
+            return `${params.recipient || "Recipient?"} | ${
+                params.subject || "Subject?"
+            }`;
 
         default: {
-            const first = Object.entries(params)[0];
-            return first ? `${first[0]}: ${first[1]}` : "Configure action";
+            const entries = Object.entries(params);
+            return entries
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(" | ");
         }
     }
 };

@@ -64,10 +64,12 @@ export default function StartNode({
                     {Object.entries(data.metadata).map(([key, value]) => (
                         <span
                             key={key}
-                            className="px-2 py-0.5 rounded bg-gray-100 text-gray-600"
+                            className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-gray-300 backdrop-blur-sm"
                         >
-              {key}: {value}
-            </span>
+                            <span className="text-gray-400">{key}</span>
+                            <span className="text-gray-500">:</span>
+                            <span className="text-white">{value}</span>
+                        </span>
                     ))}
                 </div>
             )}

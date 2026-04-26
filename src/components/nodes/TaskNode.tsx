@@ -19,7 +19,13 @@ const handleStyles = {
     right: { ...baseHandleStyle, transform: "translate(20%, -50%)" },
 };
 
-export default function TaskNode({ data, selected }: NodeProps<TaskNodeData>) {
+const badgeClass =
+    "flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-gray-300 backdrop-blur-sm";
+
+export default function TaskNode({
+                                     data,
+                                     selected,
+                                 }: NodeProps<TaskNodeData>) {
     return (
         <div
             className={`relative bg-white/5 backdrop-blur-md border-2 text-white rounded-xl shadow-sm px-3 py-2 min-w-[220px] transition-all duration-150 hover:shadow-md ${
@@ -74,16 +80,18 @@ export default function TaskNode({ data, selected }: NodeProps<TaskNodeData>) {
 
             <div className="flex flex-wrap gap-2 text-[11px]">
                 {data.assignee && (
-                    <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100 text-gray-600">
-            <User size={12} />
-                        {data.assignee}
+                    <span className={badgeClass}>
+            <User size={12} className="text-gray-400" />
+            <span className="text-gray-400">Assignee:</span>
+            <span className="text-white">{data.assignee}</span>
           </span>
                 )}
 
                 {data.dueDate && (
-                    <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100 text-gray-600">
-            <Calendar size={12} />
-                        {data.dueDate}
+                    <span className={badgeClass}>
+            <Calendar size={12} className="text-gray-400" />
+            <span className="text-gray-400">Due:</span>
+            <span className="text-white">{data.dueDate}</span>
           </span>
                 )}
             </div>
@@ -92,11 +100,10 @@ export default function TaskNode({ data, selected }: NodeProps<TaskNodeData>) {
                 Object.keys(data.customFields).length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2 text-[10px]">
                         {Object.entries(data.customFields).map(([key, value]) => (
-                            <span
-                                key={key}
-                                className="px-2 py-0.5 rounded bg-gray-100 text-gray-600"
-                            >
-                {key}: {value}
+                            <span key={key} className={badgeClass}>
+                <span className="text-gray-400">{key}</span>
+                <span className="text-gray-500">:</span>
+                <span className="text-white">{value}</span>
               </span>
                         ))}
                     </div>

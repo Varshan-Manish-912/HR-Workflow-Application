@@ -168,26 +168,50 @@ export default function SimulationPanel({
 
             setSimulationResult(response);
 
-            const path = response.paths?.[0];
-            if (!path) throw new Error("No valid path returned");
+            const allPaths = response.paths;
 
-            const readableLogs = generateReadableLogs(path, nodes);
+            if (!allPaths || allPaths.length === 0) {
+                throw new Error("No valid paths returned");
+            }
 
-            let i = 0;
+            let pathIndex = 0;
+            let stepIndex = 0;
+
             setLogs([]);
             setActiveStep(-1);
 
-            const interval = setInterval(() => {
-                setLogs((prev) => [...prev, readableLogs[i]]);
-                setActiveStep(i);
+            const runPath = () => {
+                const currentPath = allPaths[pathIndex];
+                const readableLogs = generateReadableLogs(currentPath, nodes);
 
-                i++;
+                setLogs((prev) => [
+                    ...prev,
+                    `--- Path ${pathIndex + 1} ---`,
+                ]);
 
-                if (i >= readableLogs.length) {
-                    clearInterval(interval);
-                    setTimeout(() => setActiveStep(-1), 1000);
-                }
-            }, 600);
+                stepIndex = 0;
+
+                const interval = setInterval(() => {
+                    setLogs((prev) => [...prev, readableLogs[stepIndex]]);
+                    setActiveStep(stepIndex);
+
+                    stepIndex++;
+
+                    if (stepIndex >= readableLogs.length) {
+                        clearInterval(interval);
+
+                        pathIndex++;
+
+                        if (pathIndex < allPaths.length) {
+                            setTimeout(runPath, 800);
+                        } else {
+                            setTimeout(() => setActiveStep(-1), 1000);
+                        }
+                    }
+                }, 600);
+            };
+
+            runPath();
         } catch (err: unknown) {
             if (err instanceof Error) setError(err.message);
             else setError("Something went wrong");

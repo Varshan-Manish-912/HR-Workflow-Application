@@ -52,7 +52,7 @@ export default function EdgePanel({
                                 eds.filter((edge) => edge.id !== selectedEdge.id)
                             );
                         }}
-                        className="flex items-center justify-center gap-2 px-3 py-1.5 mt-2 text-xs text-white transition bg-gray-700 rounded hover:bg-red-700"
+                        className="w-full py-1.5 mt-2 text-xs text-red-400 bg-red-500/10 rounded hover:bg-red-500/20 transition"
                     >
                         Delete Edge
                     </button>
