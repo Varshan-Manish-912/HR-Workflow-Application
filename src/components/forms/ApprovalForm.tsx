@@ -22,7 +22,6 @@ export default function ApprovalForm({
         <div className="space-y-3">
             <p className="font-medium">Approval Config</p>
 
-            {/* Title */}
             <input
                 className={inputClass}
                 placeholder="Enter Title"
@@ -32,7 +31,6 @@ export default function ApprovalForm({
                 }
             />
 
-            {/* Role */}
             <input
                 className={inputClass}
                 placeholder="Enter Role (e.g., Manager)"
@@ -42,7 +40,6 @@ export default function ApprovalForm({
                 }
             />
 
-            {/* Threshold */}
             <input
                 type="number"
                 className={inputClass}

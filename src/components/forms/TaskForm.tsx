@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
-import { TaskNodeType } from "@/types/nodeTypes";
+import React, { useState } from "react";
 import { Calendar, X } from "lucide-react";
+
+import { TaskNodeType } from "@/types/nodeTypes";
 
 type Props = {
     node: TaskNodeType;
@@ -16,24 +17,20 @@ type Props = {
 const inputClass =
     "w-full bg-white/5 backdrop-blur-md border border-gray-600/50 text-white text-sm px-2 py-1 rounded-md outline-none placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all";
 
-
-export default function TaskForm({ node, updateNodeFieldAction }: Props) {
+export default function TaskForm({
+                                     node,
+                                     updateNodeFieldAction,
+                                 }: Props) {
     const customFields = node.data.customFields || {};
+    const [editingKeys, setEditingKeys] = useState<Record<string, string>>({});
 
-    // 🔥 local state to prevent cursor jump
-    const [editingKeys, setEditingKeys] = React.useState<
-        Record<string, string>
-    >({});
-
-    // ➕ Add new field
     const addField = () => {
         updateNodeFieldAction(node.id, "customFields", {
             ...customFields,
-            ["key" + Date.now()]: "",
+            [`key${Date.now()}`]: "",
         });
     };
 
-    // ✏️ Update value (safe)
     const updateValue = (key: string, value: string) => {
         updateNodeFieldAction(node.id, "customFields", {
             ...customFields,
@@ -41,14 +38,12 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
         });
     };
 
-    // ❌ Delete field
     const deleteField = (key: string) => {
         const newFields = { ...customFields };
         delete newFields[key];
 
         updateNodeFieldAction(node.id, "customFields", newFields);
 
-        // clean local state
         setEditingKeys((prev) => {
             const updated = { ...prev };
             delete updated[key];
@@ -60,7 +55,6 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
         <div className="space-y-3">
             <p className="font-medium">Task Config</p>
 
-            {/* Title */}
             <input
                 className={inputClass}
                 placeholder="Enter Title"
@@ -70,7 +64,6 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
                 }
             />
 
-            {/* Description */}
             <input
                 className={inputClass}
                 placeholder="Enter Description"
@@ -80,7 +73,6 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
                 }
             />
 
-            {/* Assignee */}
             <input
                 className={inputClass}
                 placeholder="Enter Assignee"
@@ -90,7 +82,6 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
                 }
             />
 
-            {/* Due Date */}
             <div className="relative">
                 <input
                     type="date"
@@ -106,7 +97,6 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
                 />
             </div>
 
-            {/* Custom Fields */}
             <div className="space-y-2">
                 <p className="text-sm text-gray-500">Custom Fields</p>
 
@@ -114,8 +104,7 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
                     const tempKey = editingKeys[key] ?? key;
 
                     return (
-                        <div key={key} className="flex gap-2 items-center">
-                            {/* KEY INPUT */}
+                        <div key={key} className="flex items-center gap-2">
                             <input
                                 className={inputClass}
                                 value={tempKey}
@@ -132,10 +121,15 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
 
                                     const newFields = { ...customFields };
                                     const val = newFields[key];
+
                                     delete newFields[key];
                                     newFields[newKey] = val;
 
-                                    updateNodeFieldAction(node.id, "customFields", newFields);
+                                    updateNodeFieldAction(
+                                        node.id,
+                                        "customFields",
+                                        newFields
+                                    );
 
                                     setEditingKeys((prev) => {
                                         const updated = { ...prev };
@@ -145,7 +139,6 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
                                 }}
                             />
 
-                            {/* VALUE INPUT */}
                             <input
                                 className={inputClass}
                                 value={value}
@@ -153,7 +146,6 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
                                 placeholder="Enter Value"
                             />
 
-                            {/* DELETE BUTTON */}
                             <button
                                 onClick={() => deleteField(key)}
                                 className="text-gray-400 hover:text-red-500"
@@ -164,7 +156,6 @@ export default function TaskForm({ node, updateNodeFieldAction }: Props) {
                     );
                 })}
 
-                {/* ADD BUTTON */}
                 <button
                     onClick={addField}
                     className="text-xs text-blue-500"

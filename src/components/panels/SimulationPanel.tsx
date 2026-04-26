@@ -1,18 +1,21 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Edge } from "reactflow";
+import { Play, Copy, ClipboardPaste } from "lucide-react";
+import { ImperativePanelHandle } from "react-resizable-panels";
+
 import { WorkflowNode } from "@/types/nodeTypes";
 import { simulateWorkflowAPI } from "@/lib/api/workFlowApi";
 import { SimulationResult } from "@/lib/simulation/simulateWorkflow";
-import { Play, Copy, ClipboardPaste } from "lucide-react";
-import { ImperativePanelHandle } from "react-resizable-panels";
 
 type Props = {
     nodes: WorkflowNode[];
     edges: Edge[];
     setActiveStep: React.Dispatch<React.SetStateAction<number>>;
-    setSimulationResult: React.Dispatch<React.SetStateAction<SimulationResult | null>>;
+    setSimulationResult: React.Dispatch<
+        React.SetStateAction<SimulationResult | null>
+    >;
     bottomPanelRef: React.RefObject<ImperativePanelHandle | null>;
     setNodes: React.Dispatch<React.SetStateAction<WorkflowNode[]>>;
     setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
@@ -27,18 +30,18 @@ export default function SimulationPanel({
                                             setNodes,
                                             setEdges,
                                         }: Props) {
-    const [logs, setLogs] = React.useState<string[]>([]);
-    const [loading, setLoading] = React.useState(false);
-    const [error, setError] = React.useState<string | null>(null);
-    const [showJSON, setShowJSON] = React.useState(false);
-    const [jsonText, setJsonText] = React.useState("");
-    const [mode, setMode] = React.useState<"export" | "import" | null>(null);
+    const [logs, setLogs] = useState<string[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const [isCopied, setIsCopied] = React.useState(false);
-    const [isPasted, setIsPasted] = React.useState(false);
-    const [jsonError, setJsonError] = React.useState<string | null>(null);
+    const [showJSON, setShowJSON] = useState(false);
+    const [jsonText, setJsonText] = useState("");
+    const [mode, setMode] = useState<"export" | "import" | null>(null);
 
-    // 🔥 FORMATTER
+    const [isCopied, setIsCopied] = useState(false);
+    const [isPasted, setIsPasted] = useState(false);
+    const [jsonError, setJsonError] = useState<string | null>(null);
+
     function formatStepLog(node: WorkflowNode, step: number): string {
         const label = node.data?.label || node.type;
 
@@ -87,7 +90,6 @@ export default function SimulationPanel({
         });
     };
 
-    // ✅ COPY
     const handleCopy = async () => {
         try {
             await navigator.clipboard.writeText(jsonText);
@@ -98,7 +100,6 @@ export default function SimulationPanel({
         }
     };
 
-    // ✅ VALIDATE JSON
     const validateJSON = (text: string) => {
         try {
             const parsed = JSON.parse(text);
@@ -107,13 +108,12 @@ export default function SimulationPanel({
             }
             setJsonError(null);
             return parsed;
-        } catch (err) {
+        } catch {
             setJsonError("Invalid JSON format");
             return null;
         }
     };
 
-    // ✅ PASTE
     const handlePaste = async () => {
         try {
             const text = await navigator.clipboard.readText();
@@ -122,9 +122,7 @@ export default function SimulationPanel({
             setIsPasted(true);
             setTimeout(() => setIsPasted(false), 1500);
 
-            // 🔥 Auto validate
             const parsed = validateJSON(text);
-
             if (parsed) {
                 setNodes(parsed.nodes);
                 setEdges(parsed.edges);
@@ -190,7 +188,6 @@ export default function SimulationPanel({
                     setTimeout(() => setActiveStep(-1), 1000);
                 }
             }, 600);
-
         } catch (err: unknown) {
             if (err instanceof Error) setError(err.message);
             else setError("Something went wrong");
@@ -216,15 +213,17 @@ export default function SimulationPanel({
     };
 
     return (
-        <div className="w-full h-full flex flex-col border-t border-gray-800 bg-[#0b0b0b] text-green-400 text-xs">
-            {/* HEADER */}
+        <div className="flex flex-col w-full h-full text-xs text-green-400 border-t border-gray-800 bg-[#0b0b0b]">
             <div className="flex items-center justify-between px-3 py-2 border-b border-gray-800">
-                <span className="font-semibold text-gray-300 text-xs">
-                    Simulation Sandbox
-                </span>
+        <span className="text-xs font-semibold text-gray-300">
+          Simulation Sandbox
+        </span>
 
                 <div className="flex gap-2">
-                    <button onClick={handleExport} className="text-blue-400 hover:text-white text-xs">
+                    <button
+                        onClick={handleExport}
+                        className="text-xs text-blue-400 hover:text-white"
+                    >
                         Export
                     </button>
 
@@ -234,7 +233,7 @@ export default function SimulationPanel({
                             setShowJSON(true);
                             setJsonText("");
                         }}
-                        className="text-yellow-400 hover:text-white text-xs"
+                        className="text-xs text-yellow-400 hover:text-white"
                     >
                         Import
                     </button>
@@ -243,7 +242,7 @@ export default function SimulationPanel({
                 <div className="flex gap-2">
                     <button
                         onClick={() => setShowJSON((p) => !p)}
-                        className="text-gray-400 hover:text-white text-xs"
+                        className="text-xs text-gray-400 hover:text-white"
                     >
                         {showJSON ? "Hide JSON" : "Show JSON"}
                     </button>
@@ -251,7 +250,7 @@ export default function SimulationPanel({
                     <button
                         onClick={runSimulation}
                         disabled={loading}
-                        className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs disabled:opacity-50"
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50"
                     >
                         <Play size={12} />
                         {loading ? "Running..." : "Execute"}
@@ -259,67 +258,74 @@ export default function SimulationPanel({
 
                     <button
                         onClick={() => bottomPanelRef.current?.collapse()}
-                        className="bg-gray-700 hover:bg-red-500 px-2 py-1 rounded text-xs"
+                        className="px-2 py-1 text-xs bg-gray-700 rounded hover:bg-red-500"
                     >
                         −
                     </button>
                 </div>
             </div>
 
-            {/* BODY */}
-            <div className="p-3 h-full overflow-y-auto space-y-2 font-mono">
-
+            <div className="p-3 space-y-2 overflow-y-auto font-mono h-full">
                 {error && <div className="text-red-400">❌ {error}</div>}
 
                 {showJSON && (
-                    <div className="bg-black p-2 rounded space-y-2">
-
+                    <div className="p-2 space-y-2 bg-black rounded">
                         <div className="relative">
-                            <textarea
-                                value={jsonText}
-                                onChange={(e) => setJsonText(e.target.value)}
-                                readOnly={mode === "export"}
-                                className="w-full h-40 bg-[#0a0a0a] text-green-400 p-2 pb-8 text-xs rounded border border-gray-800 outline-none font-mono resize-none"
-                            />
+              <textarea
+                  value={jsonText}
+                  onChange={(e) => setJsonText(e.target.value)}
+                  readOnly={mode === "export"}
+                  className="w-full h-40 p-2 pb-8 text-xs text-green-400 border border-gray-800 rounded outline-none resize-none bg-[#0a0a0a] font-mono"
+              />
 
-                            {/* COPY (Export Only) */}
                             {mode === "export" && (
                                 <button
                                     onClick={handleCopy}
-                                    title="Copy JSON"
-                                    className="absolute top-2 right-5 p-1.5 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded transition-colors"
+                                    className="absolute p-1.5 text-gray-400 transition-colors bg-gray-800 rounded top-2 right-5 hover:bg-gray-700 hover:text-white"
                                 >
-                                    <Copy size={14} className={isCopied ? "text-green-500" : ""} />
+                                    <Copy
+                                        size={14}
+                                        className={isCopied ? "text-green-500" : ""}
+                                    />
                                 </button>
                             )}
 
-                            {/* PASTE (Import Only) */}
                             {mode === "import" && (
                                 <button
                                     onClick={handlePaste}
-                                    title="Paste JSON"
-                                    className="absolute top-2 right-5 p-1.5 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded transition-colors"
+                                    className="absolute p-1.5 text-gray-400 transition-colors bg-gray-800 rounded top-2 right-5 hover:bg-gray-700 hover:text-white"
                                 >
-                                    <ClipboardPaste size={14} className={isPasted ? "text-green-500" : ""} />
+                                    <ClipboardPaste
+                                        size={14}
+                                        className={isPasted ? "text-green-500" : ""}
+                                    />
                                 </button>
                             )}
                         </div>
 
-                        {/* STATUS */}
-                        {isCopied && <div className="text-green-500 text-xs">Copied!</div>}
-                        {isPasted && <div className="text-green-500 text-xs">Pasted!</div>}
-                        {jsonError && <div className="text-red-400 text-xs">{jsonError}</div>}
+                        {isCopied && (
+                            <div className="text-xs text-green-500">Copied!</div>
+                        )}
+                        {isPasted && (
+                            <div className="text-xs text-green-500">Pasted!</div>
+                        )}
+                        {jsonError && (
+                            <div className="text-xs text-red-400">{jsonError}</div>
+                        )}
 
                         <div className="flex justify-between">
                             {mode === "import" && (
-                                <button onClick={handleImport} className="text-green-400 text-xs">
+                                <button
+                                    onClick={handleImport}
+                                    className="text-xs text-green-400"
+                                >
                                     Load Workflow
                                 </button>
                             )}
 
                             <button
                                 onClick={() => setShowJSON(false)}
-                                className="text-red-400 text-xs"
+                                className="text-xs text-red-400"
                             >
                                 Close
                             </button>
@@ -339,7 +345,9 @@ export default function SimulationPanel({
                         </div>
                     ))}
 
-                {loading && <div className="text-gray-400">Running simulation...</div>}
+                {loading && (
+                    <div className="text-gray-400">Running simulation...</div>
+                )}
             </div>
         </div>
     );

@@ -1,13 +1,14 @@
 @import "tailwindcss";
-/* globals.css */
+
 html,
 body,
 :root {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* Prevents double scrollbars with PanelGroup */
+  overflow: hidden;
 }
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -48,50 +49,48 @@ body {
   border: 1px solid #1f2937;
   border-radius: 12px;
   padding: 4px;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(6px);
 }
 
-/* make buttons look like pills instead of stacked boxes */
 .react-flow__controls-button {
-  background: transparent !important;
-  border: none !important;
-  color: #ffffff !important; /* WHITE icons */
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 8px;
+  color: #ffffff !important;
   transition: all 0.15s ease;
 }
 
-/* hover */
 .react-flow__controls-button:hover {
   background-color: #1f2937 !important;
   transform: scale(1.05);
 }
 
-/* click */
 .react-flow__controls-button:active {
-  transform: scale(0.92);
   background-color: #374151 !important;
+  transform: scale(0.92);
 }
 
-/* REMOVE that ugly divider line */
 .react-flow__controls-button + .react-flow__controls-button {
   border-top: none !important;
 }
+
 .react-flow__controls-button svg {
   fill: white !important;
   stroke: white !important;
 }
+
 .react-flow__edge:hover path {
   stroke: #60a5fa;
   stroke-width: 3.5;
 }
+
 .react-flow__edge.selected path {
-  stroke: #60a5fa !important; /* 🔥 soft blue */
+  stroke: #60a5fa !important;
   stroke-width: 2 !important;
 }
-

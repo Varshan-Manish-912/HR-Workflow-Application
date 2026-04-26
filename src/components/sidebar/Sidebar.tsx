@@ -1,14 +1,18 @@
 "use client";
 
 import {
-    Play,
     CheckCircle,
+    Play,
+    Redo2,
+    Square,
+    Trash2,
+    Undo2,
     User,
     Zap,
-    Square, Trash2, Undo2, Redo2,
 } from "lucide-react";
-import { ImperativePanelHandle } from "react-resizable-panels";
 import Lottie from "lottie-react";
+import { ImperativePanelHandle } from "react-resizable-panels";
+
 import animation from "@/assets/workflow.json";
 
 type Props = {
@@ -70,29 +74,23 @@ export default function Sidebar({ sidebarRef }: Props) {
     };
 
     return (
-        <div className="w-full h-full bg-sidebar text-textPrimary flex flex-col relative">
-
-            {/* Collapse */}
+        <div className="relative flex flex-col w-full h-full bg-sidebar text-textPrimary">
             <button
                 onClick={() => sidebarRef.current?.collapse()}
-                className="absolute top-2 right-2 bg-gray-700 hover:bg-red-600 text-white px-2 py-1 rounded text-xs z-10"
+                className="absolute z-10 px-2 py-1 text-xs text-white bg-gray-700 rounded top-2 right-2 hover:bg-red-600"
             >
                 −
             </button>
 
-            {/* Header */}
             <div className="px-4 pt-4 pb-2 border-b border-border">
-                <h1 className="text-sm font-semibold text-white tracking-wide">
+                <h1 className="text-sm font-semibold tracking-wide text-white">
                     Workflow Nodes
                 </h1>
             </div>
 
-            {/* 🔥 MAIN CONTENT */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-
-                {/* 🔹 Nodes (scrollable) */}
+            <div className="flex flex-col flex-1 overflow-hidden">
                 <div className="p-4 overflow-y-auto">
-                    <h2 className="text-xs font-semibold mb-3 text-gray-400 tracking-wide">
+                    <h2 className="mb-3 text-xs font-semibold tracking-wide text-gray-400">
                         Nodes
                     </h2>
 
@@ -105,29 +103,21 @@ export default function Sidebar({ sidebarRef }: Props) {
                                     key={node.type}
                                     draggable
                                     onDragStart={(e) => onDragStart(e, node.type)}
-                                    className={`
-                group flex flex-col gap-1
-                bg-panel/80 border border-border/50
-                rounded-xl px-3 py-2 text-sm cursor-grab
-                backdrop-blur-md transition-all duration-200
-                ${node.hoverBg}
-                hover:border-gray-600 hover:shadow-lg hover:shadow-black/40
-                active:cursor-grabbing active:scale-95
-              `}
+                                    className={`group flex flex-col gap-1 rounded-xl px-3 py-2 text-sm cursor-grab bg-panel/80 border border-border/50 backdrop-blur-md transition-all duration-200 ${node.hoverBg} hover:border-gray-600 hover:shadow-lg hover:shadow-black/40 active:cursor-grabbing active:scale-95`}
                                 >
                                     <div className="flex items-center gap-3">
                                         <Icon className={`w-4 h-4 ${node.color}`} />
 
                                         <span className="text-gray-200 group-hover:text-white">
-                  {node.label}
-                </span>
+                      {node.label}
+                    </span>
 
                                         <div
                                             className={`ml-auto w-1.5 h-1.5 rounded-full bg-gray-600 transition-all ${node.dot}`}
                                         />
                                     </div>
 
-                                    <div className="text-[11px] text-gray-400 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-10 transition-all duration-200 overflow-hidden">
+                                    <div className="text-[11px] text-gray-400 opacity-0 max-h-0 overflow-hidden transition-all duration-200 group-hover:opacity-100 group-hover:max-h-10">
                                         {node.description}
                                     </div>
                                 </div>
@@ -136,46 +126,39 @@ export default function Sidebar({ sidebarRef }: Props) {
                     </div>
                 </div>
 
-                {/* 🔥 LOTTIE (fills remaining space) */}
-                <div className="flex-1 flex items-center justify-center px-4">
+                <div className="flex items-center justify-center flex-1 px-4">
                     <Lottie
                         animationData={animation}
                         loop
                         className="w-full h-full max-h-48 opacity-60 brightness-150"
                     />
                 </div>
-
             </div>
-            <div className="px-4 py-2 border-t border-border text-[10px] text-gray-400 space-y-1">
 
-                {/* DELETE */}
-                <div className="flex items-center gap-2 opacity-80 hover:opacity-100 transition">
+            <div className="px-4 py-2 space-y-1 text-[10px] text-gray-400 border-t border-border">
+                <div className="flex items-center gap-2 transition opacity-80 hover:opacity-100">
                     <Trash2 className="w-3 h-3 text-white" />
                     <span>
             Delete — <span className="text-gray-300">selected node/edge</span>
-        </span>
+          </span>
                 </div>
 
-                {/* UNDO */}
-                <div className="flex items-center gap-2 opacity-80 hover:opacity-100 transition">
+                <div className="flex items-center gap-2 transition opacity-80 hover:opacity-100">
                     <Undo2 className="w-3 h-3 text-white" />
                     <span>
             Ctrl + Z — <span className="text-gray-300">Undo</span>
-        </span>
+          </span>
                 </div>
 
-                {/* REDO */}
-                <div className="flex items-center gap-2 opacity-80 hover:opacity-100 transition">
+                <div className="flex items-center gap-2 transition opacity-80 hover:opacity-100">
                     <Redo2 className="w-3 h-3 text-white" />
                     <span>
             Ctrl + Y — <span className="text-gray-300">Redo</span>
-        </span>
+          </span>
                 </div>
-
             </div>
-            {/* Footer */}
-            <div className="px-4 py-2 border-t border-border text-[10px] text-gray-500 text-center">
 
+            <div className="px-4 py-2 text-[10px] text-center text-gray-500 border-t border-border">
                 © Varshan Manish 2026
             </div>
         </div>

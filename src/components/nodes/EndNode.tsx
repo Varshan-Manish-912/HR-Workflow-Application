@@ -1,23 +1,20 @@
 "use client";
 
-import { NodeProps, Handle, Position } from "reactflow";
-import { EndNodeData } from "@/types/nodeTypes";
+import { Handle, NodeProps, Position } from "reactflow";
 import { Square } from "lucide-react";
 
-const handleStyleLeft = {
+import { EndNodeData } from "@/types/nodeTypes";
+
+const baseHandleStyle = {
     width: 8,
     height: 8,
     borderRadius: "50%",
     padding: 0,
-    transform: "translate(-20%, -50%)",
 };
 
-const handleStyleTop = {
-    width: 8,
-    height: 8,
-    borderRadius: "50%",
-    padding: 0,
-    transform: "translate(-50%, -20%)",
+const handleStyles = {
+    top: { ...baseHandleStyle, transform: "translate(-50%, -20%)" },
+    left: { ...baseHandleStyle, transform: "translate(-20%, -50%)" },
 };
 
 export default function EndNode({
@@ -26,25 +23,27 @@ export default function EndNode({
                                 }: NodeProps<EndNodeData>) {
     return (
         <div
-            className={`
-        relative
-        bg-white/5 backdrop-blur-md border-2 text-white
-        rounded-xl
-        shadow-sm
-        px-3 py-2
-        min-w-[200px]
-        transition-all duration-150
-        hover:shadow-md
-        ${selected ? "border-2 border-red-500" : "border-red-800"}
-      `}
+            className={`relative bg-white/5 backdrop-blur-md border-2 text-white rounded-xl shadow-sm px-3 py-2 min-w-[200px] transition-all duration-150 hover:shadow-md ${
+                selected ? "border-red-500" : "border-red-800"
+            }`}
         >
-            {/* Only incoming */}
-            <Handle id="top" className = "!bg-red-500 hover:!bg-red-300" type="target" position={Position.Top} style={handleStyleTop}/>
-            <Handle id="left" className = "!bg-red-500 hover:!bg-red-300" type="target" position={Position.Left} style={handleStyleLeft} />
+            <Handle
+                id="top"
+                type="target"
+                position={Position.Top}
+                className="!bg-red-500 hover:!bg-red-300"
+                style={handleStyles.top}
+            />
+            <Handle
+                id="left"
+                type="target"
+                position={Position.Left}
+                className="!bg-red-500 hover:!bg-red-300"
+                style={handleStyles.left}
+            />
 
-            {/* Header */}
             <div className="flex items-start gap-2 mb-2">
-                <div className="w-6 h-6 rounded bg-red-100 flex items-center justify-center">
+                <div className="flex items-center justify-center w-6 h-6 bg-red-100 rounded">
                     <Square size={14} className="text-red-600" />
                 </div>
 
@@ -58,7 +57,6 @@ export default function EndNode({
                 </div>
             </div>
 
-            {/* Summary flag */}
             {data.summary && (
                 <div className="text-xs text-red-500">
                     Summary Enabled

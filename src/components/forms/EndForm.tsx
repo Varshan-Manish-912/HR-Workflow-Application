@@ -25,7 +25,6 @@ export default function EndForm({
         <div className="space-y-3">
             <p className="font-medium">End Config</p>
 
-            {/* Title */}
             <input
                 className={inputClass}
                 placeholder="Enter Title"
@@ -35,7 +34,6 @@ export default function EndForm({
                 }
             />
 
-            {/* End Message */}
             <textarea
                 className={textareaClass}
                 placeholder="Enter End Message"
@@ -46,7 +44,6 @@ export default function EndForm({
                 }
             />
 
-            {/* 🔥 Modern Toggle */}
             <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-300">Enable Summary</span>
 

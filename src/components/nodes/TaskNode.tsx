@@ -1,93 +1,63 @@
 "use client";
 
-import { NodeProps, Handle, Position } from "reactflow";
+import { Handle, NodeProps, Position } from "reactflow";
+import { Calendar, User } from "lucide-react";
+
 import { TaskNodeData } from "@/types/nodeTypes";
-import { User, Calendar } from "lucide-react";
 
-const handleStyleTop = {
+const baseHandleStyle = {
     width: 8,
     height: 8,
     borderRadius: "50%",
     padding: 0,
-    transform: "translate(-50%, -20%)",
 };
 
-const handleStyleBottom = {
-    width: 8,
-    height: 8,
-    borderRadius: "50%",
-    padding: 0,
-    transform: "translate(-50%, 20%)",
+const handleStyles = {
+    top: { ...baseHandleStyle, transform: "translate(-50%, -20%)" },
+    bottom: { ...baseHandleStyle, transform: "translate(-50%, 20%)" },
+    left: { ...baseHandleStyle, transform: "translate(-20%, -50%)" },
+    right: { ...baseHandleStyle, transform: "translate(20%, -50%)" },
 };
 
-const handleStyleLeft = {
-    width: 8,
-    height: 8,
-    borderRadius: "50%",
-    padding: 0,
-    transform: "translate(-20%, -50%)",
-};
-
-const handleStyleRight = {
-    width: 8,
-    height: 8,
-    borderRadius: "50%",
-    padding: 0,
-    transform: "translate(20%, -50%)",
-};
-
-export default function TaskNode({
-                                     data,
-                                     selected,
-                                 }: NodeProps<TaskNodeData>) {
+export default function TaskNode({ data, selected }: NodeProps<TaskNodeData>) {
     return (
         <div
-            className={`
-        relative
-        bg-white/5 backdrop-blur-md border-2 text-white
-        rounded-xl
-        shadow-sm
-        px-3 py-2
-        min-w-[220px]
-        transition-all duration-150
-        hover:shadow-md
-        ${selected ? "border-blue-500" : "border-blue-800"}
-      `}
+            className={`relative bg-white/5 backdrop-blur-md border-2 text-white rounded-xl shadow-sm px-3 py-2 min-w-[220px] transition-all duration-150 hover:shadow-md ${
+                selected ? "border-blue-500" : "border-blue-800"
+            }`}
         >
-            {/* Handles */}
             <Handle
                 id="top"
-                className="!bg-blue-500 hover:!bg-blue-300"
                 type="target"
                 position={Position.Top}
-                style={handleStyleTop}
+                className="!bg-blue-500 hover:!bg-blue-300"
+                style={handleStyles.top}
             />
             <Handle
                 id="bottom"
-                className="!bg-blue-500 hover:!bg-blue-300"
                 type="source"
                 position={Position.Bottom}
-                style={handleStyleBottom}
+                className="!bg-blue-500 hover:!bg-blue-300"
+                style={handleStyles.bottom}
             />
             <Handle
                 id="left"
-                className="!bg-blue-500 hover:!bg-blue-300"
                 type="target"
                 position={Position.Left}
-                style={handleStyleLeft}
+                className="!bg-blue-500 hover:!bg-blue-300"
+                style={handleStyles.left}
             />
             <Handle
                 id="right"
-                className="!bg-blue-500 hover:!bg-blue-300"
                 type="source"
                 position={Position.Right}
-                style={handleStyleRight}
+                className="!bg-blue-500 hover:!bg-blue-300"
+                style={handleStyles.right}
             />
 
-            {/* Header */}
             <div className="flex items-start justify-between mb-2">
                 <div className="flex items-start gap-2">
-                    <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center">
+                    <div className="flex items-center justify-center w-6 h-6 bg-blue-100 rounded">
                         <User size={14} className="text-blue-600" />
                     </div>
 
@@ -102,8 +72,7 @@ export default function TaskNode({
                 </div>
             </div>
 
-            {/* Metadata */}
-            <div className="flex gap-2 text-[11px] flex-wrap">
+            <div className="flex flex-wrap gap-2 text-[11px]">
                 {data.assignee && (
                     <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100 text-gray-600">
             <User size={12} />
@@ -119,10 +88,9 @@ export default function TaskNode({
                 )}
             </div>
 
-            {/* 🔥 Custom Fields (THIS WAS MISSING) */}
             {data.customFields &&
                 Object.keys(data.customFields).length > 0 && (
-                    <div className="flex flex-wrap gap-1 text-[10px] mt-2">
+                    <div className="flex flex-wrap gap-1 mt-2 text-[10px]">
                         {Object.entries(data.customFields).map(([key, value]) => (
                             <span
                                 key={key}

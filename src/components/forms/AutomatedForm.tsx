@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
+
 import { AutomatedNodeType } from "@/types/nodeTypes";
-import { getAutomations, Automation } from "@/lib/api/workFlowApi";
+import { Automation, getAutomations } from "@/lib/api/workFlowApi";
 
 const inputClass =
     "w-full bg-white/5 backdrop-blur-md border border-gray-600/50 text-white text-sm px-2 py-1 rounded-md outline-none placeholder:text-gray-400 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500/30 transition-all";
@@ -20,16 +21,15 @@ export default function AutomatedForm({
                                           node,
                                           updateNodeFieldAction,
                                       }: Props) {
-    const [actions, setActions] = React.useState<Automation[]>([]);
-    const [loading, setLoading] = React.useState(true);
-    const [open, setOpen] = React.useState(false);
+    const [actions, setActions] = useState<Automation[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [open, setOpen] = useState(false);
 
-    const dropdownRef = React.useRef<HTMLDivElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     const params = node.data.actionParams || {};
 
-    // 🔹 Fetch automations
-    React.useEffect(() => {
+    useEffect(() => {
         const fetchActions = async () => {
             try {
                 const data = await getAutomations();
@@ -42,8 +42,7 @@ export default function AutomatedForm({
         fetchActions();
     }, []);
 
-    // 🔹 Close dropdown on outside click
-    React.useEffect(() => {
+    useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (!dropdownRef.current?.contains(e.target as Node)) {
                 setOpen(false);
@@ -51,7 +50,8 @@ export default function AutomatedForm({
         };
 
         document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        return () =>
+            document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     const selectedAction = actions.find(
@@ -69,7 +69,6 @@ export default function AutomatedForm({
         <div className="space-y-3">
             <p className="font-medium">Automated Step</p>
 
-            {/* Title */}
             <input
                 className={inputClass}
                 placeholder="Enter Title"
@@ -79,12 +78,11 @@ export default function AutomatedForm({
                 }
             />
 
-            {/* 🔥 Custom Select */}
             <div className="relative" ref={dropdownRef}>
                 <button
                     type="button"
                     onClick={() => setOpen((o) => !o)}
-                    className="w-full bg-white/5 backdrop-blur-md border border-gray-600/50 text-white text-sm px-2 py-1 rounded-md text-left flex justify-between items-center"
+                    className="flex items-center justify-between w-full px-2 py-1 text-sm text-left text-white border rounded-md bg-white/5 backdrop-blur-md border-gray-600/50"
                 >
           <span className="text-gray-300">
             {loading
@@ -98,7 +96,7 @@ export default function AutomatedForm({
                 </button>
 
                 {open && (
-                    <div className="absolute z-50 mt-1 w-full bg-gray-900 border border-gray-700 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    <div className="absolute z-50 w-full mt-1 overflow-y-auto bg-gray-900 border border-gray-700 rounded-md shadow-lg max-h-48">
                         {actions.map((action) => (
                             <div
                                 key={action.id}
@@ -106,7 +104,7 @@ export default function AutomatedForm({
                                     updateNodeFieldAction(node.id, "actionId", action.id);
                                     setOpen(false);
                                 }}
-                                className="px-3 py-2 text-sm text-white hover:bg-gray-700 cursor-pointer transition"
+                                className="px-3 py-2 text-sm text-white transition cursor-pointer hover:bg-gray-700"
                             >
                                 {action.label}
                             </div>
@@ -115,7 +113,6 @@ export default function AutomatedForm({
                 )}
             </div>
 
-            {/* Dynamic Params */}
             {selectedAction && (
                 <div className="space-y-2">
                     <p className="text-sm text-gray-500">Parameters</p>
@@ -126,9 +123,7 @@ export default function AutomatedForm({
                             className={inputClass}
                             placeholder={`Enter ${param}`}
                             value={(params[param] as string) || ""}
-                            onChange={(e) =>
-                                updateParam(param, e.target.value)
-                            }
+                            onChange={(e) => updateParam(param, e.target.value)}
                         />
                     ))}
                 </div>
